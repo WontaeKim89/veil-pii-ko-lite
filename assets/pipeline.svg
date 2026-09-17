@@ -57,7 +57,7 @@
     <text x="22" y="30" class="k">04 · RELEASE</text>
     <text x="22" y="60" class="t">산출물</text>
     <text x="22" y="96" class="s">fp32 safetensors</text><text x="22" y="116" class="m">450 MB</text>
-    <text x="22" y="148" class="s">INT8 ONNX</text><text x="22" y="168" class="m">143 MB · weight-only + fp16 emb</text>
+    <text x="22" y="148" class="s">INT8 ONNX</text><text x="22" y="168" class="m">143 MB · weight-only 양자화</text>
     <text x="22" y="200" class="s">veil.py 디코더</text><text x="22" y="220" class="m">onnxruntime 만 필요</text>
     <line x1="22" y1="240" x2="198" y2="240" stroke="#2a3060"/>
     <text x="22" y="266" class="s">EVIDENCE · 재현 스크립트 · 데모</text>
