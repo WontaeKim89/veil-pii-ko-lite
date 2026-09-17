@@ -26,16 +26,9 @@
 | 지연시간 | 4 vCPU · 512 토큰 ≤ 40ms | **미달** — INT8 237ms (128 토큰 61ms, 16 스레드 108ms) |
 
 
-##2. 시스템 구성
+## 2. 시스템 구성
 
-```
-① 데이터                    ② 학습                        ③ 디코딩 (veil.py)            ④ 산출물
-BCCard 57.9k (감사 후)      KoELECTRA-base-v3 (110M)      제약 BIOES Viterbi            fp32 safetensors 450MB
-KDPII 40.1k + 대화 3.7k     토큰 분류 헤드 · 129 클래스    창 경계 스팬 병합              INT8 ONNX 143MB (weight-only + fp16 emb)
-합성 26.5k (템플릿×생성기)   6ep · lr 5e-5 · bf16 · H100    조사·호격 제거(받침 규칙)      veil.py 자체완결 디코더
-→ 32 라벨 통합 스키마        반복 가중 ×2 ×2 ×2            SentencePiece 공백 보정        EVIDENCE + 재현 스크립트
-→ hard-negative 동수         슬라이딩 창 512 / stride 128   → [{start,end,label,score}]   비교 플레이그라운드
-```
+<p align="center"><img src="assets/pipeline.svg" alt="데이터 → 학습 → 디코딩 → 산출물 파이프라인" width="100%"></p>
 
 ## 3. 백본 선택
 

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="380" viewBox="0 0 1200 380" role="img" aria-label="Veil-PII-Ko-Lite pipeline">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f1330"/><stop offset="1" stop-color="#171d45"/></linearGradient>
+    <linearGradient id="ac" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#44b48b"/><stop offset="1" stop-color="#167e6c"/></linearGradient>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,1 L8,5 L0,9" fill="none" stroke="#7d86b8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      .t{font:600 17px "IBM Plex Sans KR","Noto Sans KR",-apple-system,"Segoe UI",sans-serif;fill:#ffffff}
+      .s{font:13px "IBM Plex Sans KR","Noto Sans KR",-apple-system,"Segoe UI",sans-serif;fill:#c3c9e6}
+      .m{font:12.5px "IBM Plex Mono",ui-monospace,Menlo,monospace;fill:#8fe0c0}
+      .k{font:11px "IBM Plex Mono",ui-monospace,Menlo,monospace;fill:#7d86b8;letter-spacing:1.5px}
+    </style>
+  </defs>
+  <rect width="1200" height="380" rx="20" fill="url(#bg)"/>
+
+  <!-- ① 데이터 -->
+  <g transform="translate(40,44)">
+    <rect width="250" height="292" rx="14" fill="#141a3d" stroke="#2a3060"/>
+    <text x="22" y="30" class="k">01 · DATA</text>
+    <text x="22" y="60" class="t">데이터</text>
+    <text x="22" y="96" class="s">BCCard openpii 57.9k</text><text x="22" y="116" class="m">포맷 검증기 21종 감사</text>
+    <text x="22" y="148" class="s">KDPII 40.1k + 대화 3.7k</text><text x="22" y="168" class="m">33→16 라벨 매핑</text>
+    <text x="22" y="200" class="s">합성 26.5k</text><text x="22" y="220" class="m">LLM 템플릿 × 포맷 생성기</text>
+    <line x1="22" y1="240" x2="228" y2="240" stroke="#2a3060"/>
+    <text x="22" y="266" class="s">32 라벨 통합 스키마 · hard-negative 동수</text>
+  </g>
+  <path d="M296 190 L336 190" stroke="#7d86b8" stroke-width="1.6" marker-end="url(#ar)"/>
+
+  <!-- ② 학습 -->
+  <g transform="translate(340,44)">
+    <rect width="250" height="292" rx="14" fill="#141a3d" stroke="#2a3060"/>
+    <text x="22" y="30" class="k">02 · TRAIN</text>
+    <text x="22" y="60" class="t">학습</text>
+    <text x="22" y="96" class="s">KoELECTRA-base-v3</text><text x="22" y="116" class="m">110M · Apache 2.0</text>
+    <text x="22" y="148" class="s">토큰 분류 헤드</text><text x="22" y="168" class="m">BIOES · 129 클래스</text>
+    <text x="22" y="200" class="s">6 epoch · lr 5e-5 · bf16</text><text x="22" y="220" class="m">반복 가중 ×2 ×2 ×2</text>
+    <line x1="22" y1="240" x2="228" y2="240" stroke="#2a3060"/>
+    <text x="22" y="266" class="s">슬라이딩 창 512 / stride 128 · H100 ×1</text>
+  </g>
+  <path d="M596 190 L636 190" stroke="#7d86b8" stroke-width="1.6" marker-end="url(#ar)"/>
+
+  <!-- ③ 디코딩 -->
+  <g transform="translate(640,44)">
+    <rect width="250" height="292" rx="14" fill="#13302a" stroke="url(#ac)" stroke-width="1.6"/>
+    <text x="22" y="30" class="k" fill="#8fe0c0">03 · DECODE</text>
+    <text x="22" y="60" class="t">디코딩 · veil.py</text>
+    <text x="22" y="96" class="s">제약 BIOES Viterbi</text><text x="22" y="116" class="m">불가능한 전이 차단</text>
+    <text x="22" y="148" class="s">창 경계 스팬 병합</text><text x="22" y="168" class="m">SentencePiece 공백 보정</text>
+    <text x="22" y="200" class="s">조사·호격 제거</text><text x="22" y="220" class="m">받침 규칙 ('아'·'야')</text>
+    <line x1="22" y1="240" x2="228" y2="240" stroke="#2a3060"/>
+    <text x="22" y="266" class="m">[{start, end, label, score}]</text>
+  </g>
+  <path d="M896 190 L936 190" stroke="#7d86b8" stroke-width="1.6" marker-end="url(#ar)"/>
+
+  <!-- ④ 산출물 -->
+  <g transform="translate(940,44)">
+    <rect width="220" height="292" rx="14" fill="#141a3d" stroke="#2a3060"/>
+    <text x="22" y="30" class="k">04 · RELEASE</text>
+    <text x="22" y="60" class="t">산출물</text>
+    <text x="22" y="96" class="s">fp32 safetensors</text><text x="22" y="116" class="m">450 MB</text>
+    <text x="22" y="148" class="s">INT8 ONNX</text><text x="22" y="168" class="m">143 MB · weight-only + fp16 emb</text>
+    <text x="22" y="200" class="s">veil.py 디코더</text><text x="22" y="220" class="m">onnxruntime 만 필요</text>
+    <line x1="22" y1="240" x2="198" y2="240" stroke="#2a3060"/>
+    <text x="22" y="266" class="s">EVIDENCE · 재현 스크립트 · 데모</text>
+  </g>
+
+  <text x="600" y="362" text-anchor="middle" class="k">같은 디코더를 모든 베이스라인에 적용해 측정</text>
+</svg>
