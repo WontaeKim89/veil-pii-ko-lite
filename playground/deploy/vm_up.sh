@@ -15,7 +15,7 @@ if ! azs vm show -g "$RG" -n "$VM" -o none 2>/dev/null; then
     --admin-username "$ADMIN" --ssh-key-values "$KEY.pub" --public-ip-sku Standard --nsg-rule SSH -o none
   azs vm open-port -g "$RG" -n "$VM" --port 80,443 --priority 1010 -o none
 fi
-IP=$(azs vm show -d -g "$RG" -n "$VM" --query publicIps -o tsv); echo "VM $VM → $IP"
+IP=$(azs vm show -d -g "$RG" -n "$VM" --query publicIps -o tsv); SITE_HOST=${SITE_HOST:-${IP//./-}.sslip.io}; echo "VM $VM → $IP ($SITE_HOST)"
 SSH="ssh -i $KEY -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 $ADMIN@$IP"
 for i in $(seq 1 20); do $SSH true 2>/dev/null && break; sleep 10; done
 
@@ -26,6 +26,6 @@ $SSH 'command -v docker >/dev/null || { curl -fsSL https://get.docker.com | sudo
 # 비밀은 VM 의 .env 로만 (stdin 경유, 로그에 안 남음)
 printf 'AZ_LANG_ENDPOINT=%s\nAZ_LANG_KEY=%s\nAZURE_RPM=10\n' "$AZ_LANG_ENDPOINT" "$AZ_LANG_KEY" | $SSH 'umask 077; cat > ~/kopii-lite/playground/.env'
 HASH=$($SSH "sudo docker run --rm caddy:2 caddy hash-password --plaintext '$DEMO_PASS'")
-$SSH "sed -i -e 's#<SITE_HOST>#$IP#g' -e 's#demo \\\$2a\\\$14\\\$REPLACE_WITH_BCRYPT_HASH#demo $HASH#' ~/kopii-lite/playground/Caddyfile"
+$SSH "sed -i -e 's#<SITE_HOST>#$SITE_HOST#g' -e 's#demo \\\$2a\\\$14\\\$REPLACE_WITH_BCRYPT_HASH#demo $HASH#' ~/kopii-lite/playground/Caddyfile"
 $SSH 'cd ~/kopii-lite/playground && sudo docker compose up -d --build && sudo docker compose ps'
-echo "→ https://$IP  (basic auth demo / \$DEMO_PASS)"
+echo "→ https://$SITE_HOST  (basic auth demo / \$DEMO_PASS)"

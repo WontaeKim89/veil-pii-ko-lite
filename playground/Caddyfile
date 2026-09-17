@@ -1,15 +1,8 @@
-# vm_up.sh 가 <SITE_HOST> 를 공인 IP(또는 도메인)로 치환한다. IP 접속은 SNI 가 없어 default_sni 가 필수.
-{
-	default_sni <SITE_HOST>
-}
-https://<SITE_HOST> {
-	tls internal
+# vm_up.sh 가 <SITE_HOST> 를 <ip-with-dashes>.sslip.io (또는 실제 도메인)로 치환 → Let's Encrypt 자동 발급 (443 TLS-ALPN, 80 불필요)
+<SITE_HOST> {
 	basicauth {
 		# caddy hash-password --plaintext '비밀번호' 결과로 교체 (vm_up.sh 가 자동 치환)
 		demo $2a$14$REPLACE_WITH_BCRYPT_HASH
 	}
 	reverse_proxy web:8080
-}
-:80 {
-	redir https://{host}{uri} permanent
 }
