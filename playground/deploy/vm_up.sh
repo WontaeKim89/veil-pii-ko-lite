@@ -26,6 +26,6 @@ $SSH 'command -v docker >/dev/null || { curl -fsSL https://get.docker.com | sudo
 # 비밀은 VM 의 .env 로만 (stdin 경유, 로그에 안 남음)
 printf 'AZ_LANG_ENDPOINT=%s\nAZ_LANG_KEY=%s\nAZURE_RPM=10\n' "$AZ_LANG_ENDPOINT" "$AZ_LANG_KEY" | $SSH 'umask 077; cat > ~/kopii-lite/playground/.env'
 HASH=$($SSH "sudo docker run --rm caddy:2 caddy hash-password --plaintext '$DEMO_PASS'")
-$SSH "sed -i 's#demo \\\$2a\\\$14\\\$REPLACE_WITH_BCRYPT_HASH#demo $HASH#' ~/kopii-lite/playground/Caddyfile"
+$SSH "sed -i -e 's#<SITE_HOST>#$IP#g' -e 's#demo \\\$2a\\\$14\\\$REPLACE_WITH_BCRYPT_HASH#demo $HASH#' ~/kopii-lite/playground/Caddyfile"
 $SSH 'cd ~/kopii-lite/playground && sudo docker compose up -d --build && sudo docker compose ps'
 echo "→ https://$IP  (basic auth demo / \$DEMO_PASS)"

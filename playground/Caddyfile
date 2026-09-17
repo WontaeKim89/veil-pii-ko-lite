@@ -1,8 +1,11 @@
-# 도메인이 있으면 첫 줄을 도메인으로 바꾸면 자동 TLS. 없으면 :443 + tls internal (브라우저 경고 1회).
-:443 {
+# vm_up.sh 가 <SITE_HOST> 를 공인 IP(또는 도메인)로 치환한다. IP 접속은 SNI 가 없어 default_sni 가 필수.
+{
+	default_sni <SITE_HOST>
+}
+https://<SITE_HOST> {
 	tls internal
 	basicauth {
-		# caddy hash-password --plaintext '비밀번호' 결과로 교체
+		# caddy hash-password --plaintext '비밀번호' 결과로 교체 (vm_up.sh 가 자동 치환)
 		demo $2a$14$REPLACE_WITH_BCRYPT_HASH
 	}
 	reverse_proxy web:8080

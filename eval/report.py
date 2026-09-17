@@ -23,6 +23,7 @@ def micro_from_per(per, labels):
 
 rows = []
 for p in glob.glob(str(ROOT / "runs/**/eval_*.json"), recursive=True):
+    if ".pre_fix" in p: continue   # 디코더 수정 전 백업본은 표에서 제외
     r = json.load(open(p)); model = r.get("model") or str(Path(p).parent).replace(str(ROOT / "runs") + "/", "")
     row = {"model": model, "tag": r["tag"], "n": r["n_rows"], "f1": r["micro"]["f1"], "p": r["micro"]["p"], "r": r["micro"]["r"],
            "partial": r["micro"]["partial_f1"], "ms_per_row": r.get("ms_per_row"), "per": r["per_entity"]}

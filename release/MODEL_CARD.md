@@ -16,12 +16,12 @@ datasets: [BCCard/privacy-filter-openpii-masking, KDPII]
 
 | 벤치 | Veil-PII-Ko-Lite (fp32) | Veil-PII-Ko-Lite INT8 | BCCard MoAI-PF-INT8 (1.4B) |
 |---|---:|---:|---:|
-| KDPII test (실제 대화체, 4,891문장) | **0.9333** | 0.9335 | 0.4533 |
+| KDPII test (실제 대화체, 4,891문장) | **0.9339** | 0.9342 | 0.4533 |
 | KDPII test · FrameByFrame 9라벨 한정 | **0.9383** | — | FrameByFrame² 0.6824 |
-| KDPII test 대화 단위(458건) | **0.9417** | — | — |
-| BCCard validation · ko (10,743행) | **0.9820** | 0.9818 | 0.9589¹ |
+| KDPII test 대화 단위(458건) | **0.9423** | — | — |
+| BCCard validation · ko (10,743행) | **0.9826** | 0.9824 | 0.9594¹ |
 | BCCard validation · en (3,781행) | 0.9700 | — | — |
-| 합성 heldout v2 (670행, 32라벨) | 0.9634 | — | 0.5317 |
+| 합성 heldout v2 (670행, 32라벨) | 0.9652 | — | 0.5328 |
 
 ² FrameByFrame/privacy-filter-korean (openai/privacy-filter + LoRA, KDPII 학습). 자체 보고 0.848 은 본인 검증 분할.
 ¹ BCCard 모델 카드의 자체 보고치는 0.9824(측정 방식 미공개). 위 값은 본 레포의 스코어러·디코더로 동일 조건에서 잰 값.
