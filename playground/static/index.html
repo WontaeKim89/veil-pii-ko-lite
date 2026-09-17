@@ -6,21 +6,12 @@
 <title>Veil PII Playground</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
+/* 다크 단일 테마 — refero Mercury 팔레트 (onyx/graphite/obsidian + cobalt 1색), 그림자 없이 명도 대비로 위계 */
 :root{
-  --ground:#f6f6f8; --surface:#fff; --ink:#111a4a; --text:#22263a; --muted:#7c7f88; --line:#e1e2e8;
-  --accent:#167e6c; --accent-soft:#e3f3ee; --accent-ink:#0f5e51; --signal:#ec652b; --signal-soft:#fdeee6; --navy-soft:#e8eaf4;
-  --g-person:#dbe7ff; --g-contact:#d9f3e4; --g-fin:#fff1cc; --g-id:#e0f4f7; --g-place:#f3e2ff; --g-org:#ffe0d6; --g-miss:#efeff3;
-  --shadow:0 8px 28px rgba(17,26,74,.08);
-}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
-  --ground:#0f1330; --surface:#171c3f; --ink:#e8e9f0; --text:#d6d8e3; --muted:#9a9db0; --line:#2a3060;
-  --accent:#44b48b; --accent-soft:#163a34; --accent-ink:#8fe0c0; --signal:#f0824f; --signal-soft:#3e2418; --navy-soft:#20265a;
-  --g-person:#2b3d6b; --g-contact:#1f4a37; --g-fin:#4d3f14; --g-id:#1f3f45; --g-place:#3f2a55; --g-org:#4d2a20; --g-miss:#2a2d3f; --shadow:0 8px 28px rgba(0,0,0,.35);
-}}
-:root[data-theme="dark"]{
-  --ground:#0f1330; --surface:#171c3f; --ink:#e8e9f0; --text:#d6d8e3; --muted:#9a9db0; --line:#2a3060;
-  --accent:#44b48b; --accent-soft:#163a34; --accent-ink:#8fe0c0; --signal:#f0824f; --signal-soft:#3e2418; --navy-soft:#20265a;
-  --g-person:#2b3d6b; --g-contact:#1f4a37; --g-fin:#4d3f14; --g-id:#1f3f45; --g-place:#3f2a55; --g-org:#4d2a20; --g-miss:#2a2d3f; --shadow:0 8px 28px rgba(0,0,0,.35);
+  --ground:#171721; --surface:#1e1e2a; --navy-soft:#272735; --line:#33334a; --ink:#ededf3; --text:#d3d3dd; --muted:#8e8e9c;
+  --accent:#5266eb; --accent-soft:#262b55; --accent-ink:#a7b3ff; --signal:#e06c75; --signal-soft:#3a2428;
+  --g-person:#2c3468; --g-contact:#213d35; --g-fin:#40361f; --g-id:#1f3a40; --g-place:#382c4d; --g-org:#43302a; --g-miss:#2a2a38;
+  --shadow:none; color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--ground);color:var(--text);font:14px/1.6 "IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
@@ -30,8 +21,8 @@ header h1{font-size:16px;margin:0;color:var(--ink);font-weight:700;letter-spacin
 header span{color:var(--muted);font-size:12px}
 main{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
 .top{max-width:1080px;margin:0 auto}
-.search{display:flex;align-items:flex-start;gap:12px;padding:12px 14px 12px 18px;border:1.5px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow);transition:border-color .15s}
-.search:focus-within{border-color:var(--accent)}
+.search{display:flex;align-items:flex-start;gap:12px;padding:12px 14px 12px 18px;border:1px solid var(--line);border-radius:20px;background:var(--surface);transition:border-color .15s}
+.search:focus-within{border-color:var(--accent-ink)}
 .search .ico{flex:none;width:22px;height:22px;margin-top:6px;color:var(--accent)}
 .search textarea{flex:1;border:0;outline:0;resize:none;background:transparent;color:var(--text);font:inherit;font-size:15px;line-height:1.7;min-height:56px;max-height:220px;padding:4px 0}
 .search .side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
@@ -74,13 +65,13 @@ main{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
 .ref .note{font-size:12px;color:var(--muted);margin:10px 2px 0}
 @media (max-width:640px){.ref{margin:36px -14px 0;padding:22px 14px 28px}}
 .row{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
-.row.ours{border-color:var(--accent)}
+.row.ours{border-color:#3e4a9a}
 .tag{display:inline-flex;align-items:baseline;gap:10px;padding:5px 14px 6px 14px;border-radius:0 0 12px 0;background:var(--navy-soft);font-size:12px;color:var(--text);max-width:100%}
 .tag b{font-size:12.5px;color:var(--ink)}
 .tag i{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
 .tag .n{font-size:11.5px;color:var(--muted)}
 .tag .ok{color:var(--accent-ink);font-weight:600} .tag .bad{color:var(--signal);font-weight:600}
-.row.ours .tag{background:var(--accent)} .row.ours .tag b,.row.ours .tag i,.row.ours .tag .n,.row.ours .tag .ok{color:#fff} .row.ours .tag i,.row.ours .tag .n{opacity:.85} .row.ours .tag .bad{color:#ffd9c7}
+.row.ours .tag{background:var(--accent)} .row.ours .tag b,.row.ours .tag i,.row.ours .tag .n,.row.ours .tag .ok{color:#fff} .row.ours .tag i,.row.ours .tag .n{opacity:.85} .row.ours .tag .bad{color:#ffd0d4}
 .txt{padding:10px 18px 14px;font-size:14.5px;line-height:2.15;word-break:keep-all;white-space:pre-wrap;min-height:48px}
 .txt.wait{color:var(--muted);font-size:12.5px}
 .txt.err{color:var(--signal);font-size:12.5px}
