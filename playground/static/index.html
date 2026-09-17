@@ -21,7 +21,8 @@ header h1{font-size:16px;margin:0;color:var(--ink);font-weight:700;letter-spacin
 header span{color:var(--muted);font-size:12px}
 main{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
 .top{max-width:1080px;margin:0 auto}
-.lead{font-size:14px;font-weight:600;color:var(--ink);margin:0 0 10px 6px}
+.lead{text-align:center;font-size:24px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:14px 0 6px}
+.lead-sub{text-align:center;font-size:13.5px;color:var(--muted);margin:0 0 16px}
 .search{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 18px;border:1px solid var(--line);border-radius:999px;background:var(--surface);transition:border-color .15s}
 .search:focus-within{border-color:var(--accent-ink)}
 .search .ico{flex:none;width:20px;height:20px;color:var(--muted)}
@@ -112,11 +113,12 @@ footer a{color:var(--accent-ink)}
 </header>
 <main>
   <div class="top">
-  <div class="lead">PII 테스트 질문을 입력하세요</div>
+  <div class="lead">개인정보가 섞인 문장을 넣어 보세요</div>
+  <div class="lead-sub">네 개의 탐지기가 같은 문장을 어떻게 읽는지 바로 비교합니다. Enter 로 실행, Shift+Enter 로 줄바꿈</div>
   <div class="search">
     <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
     <textarea id="text" rows="1" placeholder="예: 김철수 고객님 010-1234-5678 로 연락드렸습니다" aria-label="탐지할 문장"></textarea>
-    <div class="side"><span class="cnt" id="cnt">0 / 2,000</span><button id="run" type="button">탐지 실행 <span style="opacity:.7">⌘↵</span></button></div>
+    <div class="side"><span class="cnt" id="cnt">0 / 2,000</span><button id="run" type="button">탐지 실행 <span style="opacity:.7">↵</span></button></div>
   </div>
   <div class="chips" id="chips"><span class="lbl">예시 문장</span></div>
   </div>
@@ -212,7 +214,7 @@ function pick(s){
   setCount(); autoGrow();
 }
 $("text").addEventListener("input", () => { pick(null); });
-$("text").addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter"){ e.preventDefault(); runAll(); } });
+$("text").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); runAll(); } });
 $("run").addEventListener("click", runAll);
 
 // ---- hover 동기화: 같은 구간을 다른 행에서도 강조
