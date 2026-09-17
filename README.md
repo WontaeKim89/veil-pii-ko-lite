@@ -2,7 +2,7 @@
 
 한국어·영어 개인정보 탐지용 토큰 분류 모델. KoELECTRA-base-v3 (110M) 를 32 라벨로 파인튜닝했고 INT8 ONNX(143MB)로 CPU 에서 구동합니다.
 
-- 모델 가중치: **https://huggingface.co/1T/veil-pii-ko-lite** (fp32 safetensors + INT8 ONNX + 디코더)
+- 모델 가중치: [GitHub Releases](https://github.com/WontaeKim89/veil-pii-ko-lite/releases) 또는 **https://huggingface.co/1T/veil-pii-ko-lite** (fp32 safetensors + INT8 ONNX)
 - 근거표·측정 조건: [`release/EVIDENCE.md`](release/EVIDENCE.md) · 모델 카드: [`release/MODEL_CARD.md`](release/MODEL_CARD.md)
 - 4개 모델 동시 비교 데모: [`playground/`](playground/) (Azure VM 에 배포, 운영 중일 때 `https://20-249-59-7.sslip.io`)
 
@@ -75,18 +75,28 @@
 
 ## 사용
 
+가중치는 두 곳에 있다. 어느 쪽이든 `release/` 에 있는 `config.json`·토크나이저·`veil.py` 와 같이 쓴다.
+
 ```bash
+git clone https://github.com/WontaeKim89/veil-pii-ko-lite && cd veil-pii-ko-lite
 pip install onnxruntime transformers numpy
-hf download 1T/veil-pii-ko-lite --local-dir veil   # model.int8.onnx · tokenizer · veil.py
+
+# 1) GitHub Releases 에서 (Hugging Face 불필요) — INT8 ONNX 143MB. --fp32 를 붙이면 safetensors 450MB 도
+bash scripts/download_weights.sh release            # → release/model.int8.onnx
+# 2) 또는 Hugging Face 에서
+hf download 1T/veil-pii-ko-lite model.int8.onnx --local-dir release
 ```
+
 ```python
-import sys; sys.path.insert(0, "veil")
+import sys; sys.path.insert(0, "release")
 from veil import Veil
-det = Veil("veil/model.int8.onnx", tokenizer_dir="veil")
+det = Veil("release/model.int8.onnx", tokenizer_dir="release")
 det.predict("담당자 김철수(010-1234-5678)에게 문의")
 # [{'start': 4, 'end': 7, 'label': 'PERSON', 'score': 0.9999}, {'start': 8, 'end': 21, 'label': 'PHONE', 'score': 0.9999}]
 det.mask("담당자 김철수(010-1234-5678)에게 문의")   # '담당자 [PERSON]([PHONE])에게 문의'
 ```
+
+가중치 파일이 git 에 직접 들어 있지 않은 이유: GitHub 는 파일당 100MB 를 넘으면 push 를 막고, LFS 는 대역폭 과금이 있다. Releases 자산은 파일당 2GB 까지 무료다.
 
 ## 레포 구성
 
