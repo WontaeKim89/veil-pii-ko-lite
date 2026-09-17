@@ -28,7 +28,8 @@ header{display:flex;align-items:center;gap:12px;padding:14px 28px;border-bottom:
 header .logo{width:26px;height:26px;color:var(--accent)}
 header h1{font-size:16px;margin:0;color:var(--ink);font-weight:700;letter-spacing:-.01em}
 header span{color:var(--muted);font-size:12px}
-main{max-width:1080px;margin:0 auto;padding:28px 24px 64px}
+main{max-width:1560px;margin:0 auto;padding:28px 28px 64px}
+.top{max-width:1080px;margin:0 auto}
 .search{display:flex;align-items:flex-start;gap:12px;padding:12px 14px 12px 18px;border:1.5px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow);transition:border-color .15s}
 .search:focus-within{border-color:var(--accent)}
 .search .ico{flex:none;width:22px;height:22px;margin-top:6px;color:var(--accent)}
@@ -45,6 +46,22 @@ main{max-width:1080px;margin:0 auto;padding:28px 24px 64px}
 .chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
 .why{font-size:12.5px;color:var(--muted);margin:-10px 0 16px;padding-left:2px}
 .rows{display:flex;flex-direction:column;gap:12px}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:12px;align-items:start}
+.info{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px 12px;font-size:12.5px;color:var(--text);display:flex;flex-direction:column;gap:6px}
+.info .h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.info .h b{font-size:13px;color:var(--ink)}
+.info .h .rel{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
+.info .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12px}
+.info .kv dt{color:var(--muted);white-space:nowrap} .info .kv dd{margin:0;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;color:var(--text)}
+.info .bench{display:flex;gap:14px;margin-top:2px}
+.info .bench div{display:flex;flex-direction:column} .info .bench b{font-family:"IBM Plex Mono",monospace;font-size:15px;color:var(--ink);font-weight:600} .info .bench span{font-size:11px;color:var(--muted);letter-spacing:.03em}
+.info .sum{font-size:12px;color:var(--text);line-height:1.55;margin-top:2px}
+.info .cav{display:none;font-size:11.5px;color:var(--muted);line-height:1.5;border-left:2px solid var(--signal);padding-left:8px} .info.open .cav{display:block}
+.info .more{margin-top:auto;padding-top:4px;font-size:11.5px;color:var(--accent-ink);cursor:pointer;background:none;border:0;text-align:left;font-family:inherit}
+.info .labels{display:none;font-size:11px;line-height:1.9} .info.open .labels{display:block}
+.info .labels code{font-family:"IBM Plex Mono",monospace;background:var(--navy-soft);padding:0 4px;border-radius:3px;margin-right:3px;font-size:11px}
+.info a{color:var(--accent-ink);font-size:11.5px}
+@media (max-width:980px){.mrow{grid-template-columns:1fr}}
 .row{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
 .row.ours{border-color:var(--accent)}
 .tag{display:inline-flex;align-items:baseline;gap:10px;padding:5px 14px 6px 14px;border-radius:0 0 12px 0;background:var(--navy-soft);font-size:12px;color:var(--text);max-width:100%}
@@ -90,6 +107,7 @@ footer a{color:var(--accent-ink)}
   <h1>Veil PII Playground</h1><span>한국어 개인정보 탐지기 4종 동시 비교 · 입력은 저장되지 않습니다</span>
 </header>
 <main>
+  <div class="top">
   <div class="search">
     <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
     <textarea id="text" rows="2" placeholder="개인정보가 섞인 문장을 붙여 넣으세요 — 예: 김철수 고객님 010-1234-5678 로 연락드렸습니다" aria-label="탐지할 문장"></textarea>
@@ -97,12 +115,11 @@ footer a{color:var(--accent-ink)}
   </div>
   <div class="chips" id="chips"><span class="lbl">예시 문장</span></div>
   <div class="why" id="why" hidden></div>
+  </div>
   <div class="rows" id="rows"></div>
   <div class="legend">
     <span style="--c:var(--g-person)">사람</span><span style="--c:var(--g-contact)">연락처·주소망</span><span style="--c:var(--g-fin)">금융</span><span style="--c:var(--g-id)">식별번호</span><span style="--c:var(--g-place)">날짜·주소</span><span style="--c:var(--g-org)">조직</span><span class="lg-miss">회색 점선 = 못 잡음</span><span class="lg-fp">붉은 점선 = 오탐</span><span class="lg-part">밑줄 점선 = 경계 불일치</span><span style="margin-left:2px">(예시 문장에서만 판정)</span>
   </div>
-  <h2>모델 정보 <span style="font-weight:400;color:var(--muted);font-size:12px">— 행을 누르면 지원 라벨과 주의점</span></h2>
-  <div class="wrap"><table id="mtable"><thead><tr><th>모델</th><th>최초 공개</th><th>크기</th><th>라벨</th><th>라이선스</th><th>KDPII test F1</th><th>BCCard val(ko) F1</th><th>실행</th></tr></thead><tbody></tbody></table></div>
   <footer>
     벤치 수치는 모두 같은 스코어러(문자 오프셋 exact-match span F1)·같은 디코더로 잰 값이며 근거는 Veil-PII-Ko-Lite 의 EVIDENCE.md 에 있습니다. 입력 문장은 서버에 기록되지 않습니다. Azure 호출은 분당 횟수 제한이 있습니다.<br>
     BCCard MoAI-Privacy-Filter 는 BC카드가 Apache 2.0 으로 공개한 모델을 그대로 사용했습니다. Presidio 같은 프레임워크는 비교 대상이 아니라 이런 모델을 끼워 쓰는 자리입니다.
@@ -152,8 +169,18 @@ function tally(spans, gold){
 }
 
 // ---- 행 렌더
+function infoEl(m){
+  const b = m.bench || {}; const f = v => v == null ? "—" : v.toFixed(3);
+  const k = b.kdpii_test_9labels ? `${f(b.kdpii_test)} <span style="font-size:10px;color:var(--muted)">(9라벨 ${f(b.kdpii_test_9labels)})</span>` : f(b.kdpii_test);
+  return `<aside class="info" id="info-${m.id}"><div class="h"><b>${esc(m.name)}</b><span class="rel">${esc(m.released)} 공개</span>${m.ours ? '<span style="color:var(--accent-ink);font-size:11px;font-weight:600">우리 모델</span>' : ""}</div>
+  <dl class="kv"><dt>크기</dt><dd>${esc(m.params)} · ${esc(m.size)}</dd><dt>라벨</dt><dd>${m.labels}종</dd><dt>라이선스</dt><dd>${esc(m.license)}</dd><dt>실행</dt><dd>${esc(m.runtime)}</dd></dl>
+  <div class="bench"><div><b>${k}</b><span>KDPII test F1</span></div><div><b>${f(b.bccard_val_ko)}</b><span>BCCard val F1</span></div>${b.synth_heldout!=null ? `<div><b>${f(b.synth_heldout)}</b><span>합성 heldout</span></div>` : ""}</div>
+  <div class="sum">${esc(m.summary)}</div><div class="cav">주의 · ${esc(m.caveat)}</div>
+  <div class="labels">지원 라벨 ${m.label_list.map(l => `<code>${l}</code>`).join("")}<br><a href="${esc(m.link)}" target="_blank" rel="noopener">출처 ↗</a></div>
+  <button class="more" type="button" onclick="this.parentElement.classList.toggle('open');this.textContent=this.parentElement.classList.contains('open')?'접기':'주의점 · 지원 라벨 · 출처'">주의점 · 지원 라벨 · 출처</button></aside>`;
+}
 function rowEl(m){
-  return `<div class="row${m.ours ? " ours" : ""}" id="row-${m.id}"><div class="tag"><b>${esc(m.name)}</b><i id="ms-${m.id}">${esc(m.params)} · ${esc(m.runtime.split(" · ")[0])}</i><span class="n" id="n-${m.id}">${m.labels} labels</span></div><div class="txt wait" id="txt-${m.id}">문장을 입력하고 탐지 실행을 누르세요</div></div>`;
+  return `<div class="mrow"><div class="row${m.ours ? " ours" : ""}" id="row-${m.id}"><div class="tag"><b>${esc(m.name)}</b><i id="ms-${m.id}">${esc(m.params)} · ${esc(m.runtime.split(" · ")[0])}</i><span class="n" id="n-${m.id}">${m.labels} labels</span></div><div class="txt wait" id="txt-${m.id}">문장을 입력하고 탐지 실행을 누르세요</div></div>${infoEl(m)}</div>`;
 }
 function fillRow(m, res, text){
   $(`txt-${m.id}`).className = "txt"; $(`txt-${m.id}`).innerHTML = paint(text, res.spans, gold);
@@ -202,29 +229,12 @@ document.addEventListener("mouseover", e => {
 });
 document.addEventListener("mouseout", e => { if (e.target.closest("mark")) document.querySelectorAll("mark.hl").forEach(x => x.classList.remove("hl")); });
 
-// ---- 모델 표
-function mtable(){
-  const tb = $("mtable").querySelector("tbody"); tb.innerHTML = "";
-  for (const m of MODELS){
-    const b = m.bench || {}; const f = v => v == null ? "—" : v.toFixed(3);
-    const k = b.kdpii_test_9labels ? `${f(b.kdpii_test)} (9라벨 ${f(b.kdpii_test_9labels)})` : f(b.kdpii_test);
-    const tr = document.createElement("tr"); tr.className = "info"; tr.tabIndex = 0;
-    tr.innerHTML = `<td><b>${esc(m.name)}</b>${m.ours ? ' <span style="color:var(--accent-ink);font-size:11px;font-weight:600;white-space:nowrap">우리 모델</span>' : ""}</td><td class="num">${esc(m.released)}</td><td class="num">${esc(m.params)} · ${esc(m.size)}</td><td class="num">${m.labels}</td><td>${esc(m.license)}</td><td class="num">${k}</td><td class="num">${f(b.bccard_val_ko)}</td><td>${esc(m.runtime)}</td>`;
-    const det = document.createElement("tr"); det.className = "detail"; det.hidden = true;
-    det.innerHTML = `<td colspan="8">${esc(m.summary)}<br><b style="color:var(--signal)">주의</b> ${esc(m.caveat)}<br>백본 ${esc(m.backbone)} · 지원 라벨: ${m.label_list.map(l => `<code>${l}</code>`).join(" ")}<br><a href="${esc(m.link)}" target="_blank" rel="noopener">출처</a></td>`;
-    const tog = () => { det.hidden = !det.hidden; };
-    tr.onclick = tog; tr.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tog(); } };
-    tb.append(tr, det);
-  }
-}
-
 // ---- 시작: 모델·시나리오 로드 → 시나리오 ① 자동 실행
 (async () => {
   [MODELS, SCEN, HEALTH] = await Promise.all([fetch("/api/models").then(r => r.json()), fetch("/api/scenarios").then(r => r.json()), fetch("/healthz").then(r => r.json()).catch(() => ({}))]);
   MODELS.sort((a,b) => a.order - b.order);
   $("rows").innerHTML = MODELS.map(rowEl).join("");
   for (const s of SCEN){ const b = document.createElement("button"); b.className = "chip"; b.type = "button"; b.dataset.id = s.id; b.textContent = s.title; b.onclick = () => { pick(s); runAll(); }; $("chips").append(b); }
-  mtable();
   if (SCEN.length){ pick(SCEN[0]); runAll(); }
 })();
 </script>
