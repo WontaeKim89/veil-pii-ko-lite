@@ -21,9 +21,10 @@ MODELS=veil,azure uvicorn app:app --port 8080 --no-access-log
 
 ```bash
 cp .env.example .env && vi .env            # Azure 키 — 절대 커밋하지 않는다
-caddy hash-password --plaintext '비밀번호'  # 결과를 Caddyfile 의 basicauth 에 넣는다
+# 접속코드는 DEMO_PASS 로 전달 → VM .env 의 DEMO_KEY
 RG=<rg> bash deploy/vm_up.sh               # D8s_v5 생성 → docker 설치 → 동기화 → compose up
 ```
 
+- 접근 제어: `.env` 의 `DEMO_KEY` 접속코드(쿠키 게이트). Basic Auth 팝업을 못 띄우는 내장 브라우저에서도 열린다.
 - `web`(veil+azure) 과 `heavy`(bccard+framebyframe) 를 분리해 1.4B 로딩·추론이 경량 응답을 막지 않게 했다.
 - 입력 텍스트는 로그에 남기지 않는다(`app.py` 는 모델명·길이·지연시간만 출력). Azure 는 분당 `AZURE_RPM`(기본 10)회.

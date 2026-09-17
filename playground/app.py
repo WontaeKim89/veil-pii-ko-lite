@@ -5,12 +5,14 @@
   HEAVY_URL     설정 시 bccard/framebyframe 요청을 그 주소로 위임 (예: http://heavy:8080)
   AZ_LANG_ENDPOINT / AZ_LANG_KEY   Azure AI Language (azure 를 띄울 때만)
   AZURE_RPM     Azure 분당 허용 호출 수 (기본 10)
+  DEMO_KEY      설정 시 접속코드 게이트 — 쿠키 없으면 코드 입력 페이지 (Basic Auth 를 못 띄우는 내장 브라우저 대응)
 입력 텍스트는 로그·디스크에 남기지 않는다 — 지연시간과 모델명만 stdout 에 찍는다.
 """
 import asyncio, json, os, time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -51,6 +53,33 @@ async def lifespan(app):
 
 app = FastAPI(title="Veil PII Playground", lifespan=lifespan, docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
+
+
+# ---- 접속코드 게이트 (DEMO_KEY 설정 시). Basic Auth 팝업을 못 띄우는 내장 브라우저용 — /healthz 는 열어 둔다
+DEMO_KEY = os.environ.get("DEMO_KEY", "")
+GATE_HTML = """<!doctype html><html lang=ko><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Veil PII Playground</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f6f6f8;font:15px "IBM Plex Sans KR",system-ui,sans-serif;color:#22263a}
+form{background:#fff;border:1px solid #e1e2e8;border-radius:16px;padding:28px 30px;width:min(360px,90vw);box-shadow:0 8px 28px rgba(17,26,74,.08)}h1{font-size:17px;color:#111a4a;margin:0 0 6px}p{margin:0 0 16px;color:#7c7f88;font-size:13px}
+input{width:100%;box-sizing:border-box;font:inherit;padding:10px 12px;border:1.5px solid #e1e2e8;border-radius:10px;margin-bottom:10px}button{width:100%;font:inherit;font-weight:600;padding:10px;border:0;border-radius:10px;background:#167e6c;color:#fff;cursor:pointer}
+.err{color:#ec652b;font-size:12.5px;margin:-4px 0 10px}</style>
+<form method=post action=/gate><h1>Veil PII Playground</h1><p>접속코드를 입력하세요.</p>%ERR%<input name=key type=password placeholder="접속코드" autofocus autocomplete=current-password><button>입장</button></form>"""
+
+
+@app.middleware("http")
+async def gate(request: Request, call_next):
+    if not DEMO_KEY or request.url.path in ("/healthz", "/gate") or request.cookies.get("veil_key") == DEMO_KEY:
+        return await call_next(request)
+    if request.url.path.startswith("/api/"): raise HTTPException(401, "gate")
+    return HTMLResponse(GATE_HTML.replace("%ERR%", ""), status_code=401)
+
+
+@app.post("/gate")
+async def gate_post(request: Request):
+    form = await request.form()
+    if form.get("key") != DEMO_KEY:
+        return HTMLResponse(GATE_HTML.replace("%ERR%", "<div class=err>접속코드가 맞지 않습니다.</div>"), status_code=401)
+    r = RedirectResponse("/", status_code=303); r.set_cookie("veil_key", DEMO_KEY, max_age=30 * 86400, httponly=True, secure=True, samesite="lax")
+    return r
 
 
 class DetectReq(BaseModel):

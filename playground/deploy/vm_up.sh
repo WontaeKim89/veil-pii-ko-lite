@@ -5,7 +5,7 @@
 set -euo pipefail
 SUB=${SUB:?subscription id}; RG=${RG:?resource group}; LOCATION=${LOCATION:-koreacentral}
 VM=${VM:-vm-pii-playground}; SIZE=${SIZE:-Standard_D8s_v5}; ADMIN=${ADMIN:-azureuser}; KEY=${KEY:-$HOME/.ssh/id_ed25519_gpu_vm}
-DEMO_PASS=${DEMO_PASS:?basic auth password}
+DEMO_PASS=${DEMO_PASS:?접속코드}
 : "${AZ_LANG_ENDPOINT:?}" "${AZ_LANG_KEY:?}"
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 azs(){ az "$@" --subscription "$SUB"; }
@@ -24,8 +24,7 @@ $SSH 'command -v docker >/dev/null || { curl -fsSL https://get.docker.com | sudo
    -e "ssh -i $KEY -o StrictHostKeyChecking=accept-new" release eval train configs playground .dockerignore "$ADMIN@$IP:~/kopii-lite/")
 
 # 비밀은 VM 의 .env 로만 (stdin 경유, 로그에 안 남음)
-printf 'AZ_LANG_ENDPOINT=%s\nAZ_LANG_KEY=%s\nAZURE_RPM=10\n' "$AZ_LANG_ENDPOINT" "$AZ_LANG_KEY" | $SSH 'umask 077; cat > ~/kopii-lite/playground/.env'
-HASH=$($SSH "sudo docker run --rm caddy:2 caddy hash-password --plaintext '$DEMO_PASS'")
-$SSH "sed -i -e 's#<SITE_HOST>#$SITE_HOST#g' -e 's#demo \\\$2a\\\$14\\\$REPLACE_WITH_BCRYPT_HASH#demo $HASH#' ~/kopii-lite/playground/Caddyfile"
+printf 'AZ_LANG_ENDPOINT=%s\nAZ_LANG_KEY=%s\nAZURE_RPM=10\nDEMO_KEY=%s\n' "$AZ_LANG_ENDPOINT" "$AZ_LANG_KEY" "$DEMO_PASS" | $SSH 'umask 077; cat > ~/kopii-lite/playground/.env'
+$SSH "sed -i 's#<SITE_HOST>#$SITE_HOST#g' ~/kopii-lite/playground/Caddyfile"
 $SSH 'cd ~/kopii-lite/playground && sudo docker compose up -d --build && sudo docker compose ps'
-echo "→ https://$SITE_HOST  (basic auth demo / \$DEMO_PASS)"
+echo "→ https://$SITE_HOST  (접속코드 = \$DEMO_PASS)"

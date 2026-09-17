@@ -1,5 +1,6 @@
 fastapi>=0.115
 uvicorn[standard]>=0.30
+python-multipart
 onnxruntime>=1.28
 transformers>=4.49
 numpy
