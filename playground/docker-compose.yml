@@ -1,0 +1,29 @@
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [web]
+  web:
+    build: { context: .., dockerfile: playground/Dockerfile }
+    restart: unless-stopped
+    env_file: .env                     # AZ_LANG_ENDPOINT / AZ_LANG_KEY / AZURE_RPM — 절대 커밋하지 않는다
+    environment:
+      MODELS: veil,azure
+      HEAVY_URL: http://heavy:8080
+    depends_on: [heavy]
+  heavy:
+    build: { context: .., dockerfile: playground/Dockerfile }
+    restart: unless-stopped
+    environment:
+      MODELS: bccard,framebyframe
+      OMP_NUM_THREADS: "6"
+    volumes:
+      - hf_cache:/hf                   # 1.4B 가중치 캐시 (재시작 시 재다운로드 방지)
+    deploy: { resources: { limits: { memory: 22g } } }
+volumes:
+  caddy_data:
+  hf_cache:

@@ -1,0 +1,42 @@
+[
+ {
+  "id": "veil", "name": "Veil-PII-Ko-Lite", "ours": true, "order": 1,
+  "released": "2026-09", "params": "110M", "size": "INT8 ONNX 143MB", "labels": 32, "license": "Apache 2.0",
+  "backbone": "KoELECTRA-base-v3", "runtime": "CPU · ONNX Runtime",
+  "bench": {"kdpii_test": 0.933, "bccard_val_ko": 0.982, "synth_heldout": 0.963},
+  "summary": "한국어 32종 PII 를 110M 파라미터로 잡는 경량 토큰 분류 모델. 공개 벤치(KDPII·BCCard)에서 1.4B 급 모델을 같은 스코어러로 앞선다.",
+  "caveat": "4 vCPU 기준 512토큰 약 240ms — 목표(40ms)는 미달. 한 절 안에 희귀 식별자(사업자번호·차량번호·가입번호)가 3개 이상 몰리면 하나를 놓치는 경향. 사람 라벨 도메인 골든셋 평가는 아직 없다.",
+  "label_list": ["PERSON","DATE","ADDRESS","EMAIL","PHONE","CARD_NUMBER","ZIPCODE","GENERIC_ID","DRIVER_LICENSE","SSN","PASSPORT","RRN","ORGANIZATION","IPADDRESS","TRANSACTION_APPROVAL_ID","USER_ID","BUSINESS_ID","ACCOUNT_NUMBER","PORT","URL","MACADDRESS","CI","SECRET","IPIN","FRN","IMEI","CARD_EXPIRY","VIRTUAL_CARD_NUMBER","CVC","VEHICLE_PLATE","SUBSCRIBER_ID","DEVICE_SERIAL"],
+  "link": "release/MODEL_CARD.md"
+ },
+ {
+  "id": "bccard", "name": "BCCard MoAI-Privacy-Filter-INT8", "ours": false, "order": 2,
+  "released": "2026-08", "params": "1.4B", "size": "INT8 ONNX", "labels": 29, "license": "Apache 2.0 (모델카드 고지 요구)",
+  "backbone": "openai/privacy-filter", "runtime": "CPU · ONNX Runtime · 우리 Viterbi 디코더",
+  "bench": {"kdpii_test": 0.453, "bccard_val_ko": 0.959, "synth_heldout": 0.532},
+  "summary": "BC카드가 openai/privacy-filter(1.4B)를 한국어 PII 29종으로 파인튜닝해 INT8 로 공개. 자체 validation 0.982 보고.",
+  "caveat": "학습 데이터가 김철수·홍길동 같은 예시 이름을 비개인정보로 라벨링해 실제 고객명이 그 이름이면 놓친다. 디코더가 미공개라 우리 Viterbi 를 적용.",
+  "label_list": ["PERSON","DATE","ADDRESS","EMAIL","PHONE","CARD_NUMBER","ZIPCODE","GENERIC_ID","DRIVER_LICENSE","SSN","PASSPORT","RRN","ORGANIZATION","IPADDRESS","TRANSACTION_APPROVAL_ID","USER_ID","BUSINESS_ID","ACCOUNT_NUMBER","PORT","URL","MACADDRESS","CI","SECRET","IPIN","FRN","IMEI","CARD_EXPIRY","VIRTUAL_CARD_NUMBER","CVC"],
+  "link": "https://huggingface.co/BCCard/MoAI-Privacy-Filter-INT8"
+ },
+ {
+  "id": "framebyframe", "name": "FrameByFrame privacy-filter-korean", "ours": false, "order": 3,
+  "released": "2026-04", "params": "1.4B", "size": "fp32 safetensors", "labels": 9, "license": "Apache 2.0",
+  "backbone": "openai/privacy-filter", "runtime": "CPU · PyTorch · 우리 Viterbi 디코더",
+  "bench": {"kdpii_test": 0.516, "kdpii_test_9labels": 0.682},
+  "summary": "openai/privacy-filter 를 KDPII 로 파인튜닝한 한국어 모델. 자체 검증 분할에서 0.848 보고.",
+  "caveat": "라벨이 9종(이름·주소·전화·이메일·날짜·계정·아이디·IP·URL)뿐이라 주민번호·카드·사업자번호 등은 아예 잡지 않는다.",
+  "label_list": ["PERSON","ADDRESS","PHONE","EMAIL","DATE","ACCOUNT_NUMBER","USER_ID","IPADDRESS","URL","SECRET"],
+  "link": "https://huggingface.co/FrameByFrame/privacy-filter-korean"
+ },
+ {
+  "id": "azure", "name": "Azure AI Language PII", "ours": false, "order": 4,
+  "released": "2021 GA", "params": "—", "size": "클라우드 API (2024-11-01)", "labels": 13, "license": "상용 (종량제)",
+  "backbone": "비공개", "runtime": "Azure koreacentral · 분당 호출 제한",
+  "bench": {"kdpii_test": 0.463, "bccard_val_ko": 0.403, "synth_heldout": 0.504},
+  "summary": "Microsoft 의 관리형 PII 탐지 API. 다국어·범용 카테고리, 한국 주민번호·여권·면허 지원.",
+  "caveat": "한국어 주소 F1 0.08 — 주소를 거의 못 잡는다. 폐쇄망에서는 컨테이너 배포가 필요하고 종량 과금.",
+  "label_list": ["PERSON","ADDRESS","ORGANIZATION","PHONE","EMAIL","URL","IPADDRESS","DATE","CARD_NUMBER","RRN","PASSPORT","DRIVER_LICENSE","ACCOUNT_NUMBER"],
+  "link": "https://learn.microsoft.com/azure/ai-services/language-service/personally-identifiable-information/overview"
+ }
+]

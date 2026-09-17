@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Veil PII Playground</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#f6f6f8; --surface:#fff; --ink:#111a4a; --text:#22263a; --muted:#7c7f88; --line:#e1e2e8;
+  --accent:#167e6c; --accent-soft:#e3f3ee; --accent-ink:#0f5e51; --signal:#ec652b; --signal-soft:#fdeee6; --navy-soft:#e8eaf4;
+  --g-person:#dbe7ff; --g-contact:#d9f3e4; --g-fin:#fff1cc; --g-id:#e0f4f7; --g-place:#f3e2ff; --g-org:#ffe0d6; --g-miss:#efeff3;
+  --shadow:0 8px 28px rgba(17,26,74,.08);
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --ground:#0f1330; --surface:#171c3f; --ink:#e8e9f0; --text:#d6d8e3; --muted:#9a9db0; --line:#2a3060;
+  --accent:#44b48b; --accent-soft:#163a34; --accent-ink:#8fe0c0; --signal:#f0824f; --signal-soft:#3e2418; --navy-soft:#20265a;
+  --g-person:#2b3d6b; --g-contact:#1f4a37; --g-fin:#4d3f14; --g-id:#1f3f45; --g-place:#3f2a55; --g-org:#4d2a20; --g-miss:#2a2d3f; --shadow:0 8px 28px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --ground:#0f1330; --surface:#171c3f; --ink:#e8e9f0; --text:#d6d8e3; --muted:#9a9db0; --line:#2a3060;
+  --accent:#44b48b; --accent-soft:#163a34; --accent-ink:#8fe0c0; --signal:#f0824f; --signal-soft:#3e2418; --navy-soft:#20265a;
+  --g-person:#2b3d6b; --g-contact:#1f4a37; --g-fin:#4d3f14; --g-id:#1f3f45; --g-place:#3f2a55; --g-org:#4d2a20; --g-miss:#2a2d3f; --shadow:0 8px 28px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--text);font:14px/1.6 "IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:14px 28px;border-bottom:1px solid var(--line);background:var(--surface)}
+header .logo{width:26px;height:26px;color:var(--accent)}
+header h1{font-size:16px;margin:0;color:var(--ink);font-weight:700;letter-spacing:-.01em}
+header span{color:var(--muted);font-size:12px}
+main{max-width:1080px;margin:0 auto;padding:28px 24px 64px}
+.search{display:flex;align-items:flex-start;gap:12px;padding:12px 14px 12px 18px;border:1.5px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow);transition:border-color .15s}
+.search:focus-within{border-color:var(--accent)}
+.search .ico{flex:none;width:22px;height:22px;margin-top:6px;color:var(--accent)}
+.search textarea{flex:1;border:0;outline:0;resize:none;background:transparent;color:var(--text);font:inherit;font-size:15px;line-height:1.7;min-height:56px;max-height:220px;padding:4px 0}
+.search .side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.search button{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+.search button:disabled{opacity:.45;cursor:not-allowed}
+.search .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
+.search .cnt.over{color:var(--signal);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 20px;align-items:center}
+.chips .lbl{font-size:11.5px;color:var(--muted);margin-right:4px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit}
+.chip:hover{border-color:var(--accent)}
+.chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.why{font-size:12.5px;color:var(--muted);margin:-10px 0 16px;padding-left:2px}
+.rows{display:flex;flex-direction:column;gap:12px}
+.row{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.row.ours{border-color:var(--accent)}
+.tag{display:inline-flex;align-items:baseline;gap:10px;padding:5px 14px 6px 14px;border-radius:0 0 12px 0;background:var(--navy-soft);font-size:12px;color:var(--text);max-width:100%}
+.tag b{font-size:12.5px;color:var(--ink)}
+.tag i{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
+.tag .n{font-size:11.5px;color:var(--muted)}
+.tag .ok{color:var(--accent-ink);font-weight:600} .tag .bad{color:var(--signal);font-weight:600}
+.row.ours .tag{background:var(--accent)} .row.ours .tag b,.row.ours .tag i,.row.ours .tag .n,.row.ours .tag .ok{color:#fff} .row.ours .tag i,.row.ours .tag .n{opacity:.85} .row.ours .tag .bad{color:#ffd9c7}
+.txt{padding:10px 18px 14px;font-size:14.5px;line-height:2.15;word-break:keep-all;white-space:pre-wrap;min-height:48px}
+.txt.wait{color:var(--muted);font-size:12.5px}
+.txt.err{color:var(--signal);font-size:12.5px}
+.txt button{margin-left:8px;font:inherit;font-size:11.5px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:2px 8px;cursor:pointer;color:var(--text)}
+mark{padding:2px 5px;border-radius:5px;color:inherit;background:var(--g-miss);cursor:default}
+mark small{font-size:9.5px;font-weight:600;letter-spacing:.03em;margin-left:3px;opacity:.7;font-family:"IBM Plex Mono",monospace}
+mark.person{background:var(--g-person)} mark.contact{background:var(--g-contact)} mark.fin{background:var(--g-fin)} mark.id{background:var(--g-id)} mark.place{background:var(--g-place)} mark.org{background:var(--g-org)}
+mark.miss{background:var(--g-miss);text-decoration:underline dotted var(--signal);text-underline-offset:4px}
+mark.hl{outline:2px solid var(--ink);outline-offset:1px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:14px 2px 0;font-size:11.5px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+h2{font-size:15px;color:var(--ink);margin:36px 0 10px;font-weight:600}
+.wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td b{color:var(--ink)} td.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.info{cursor:pointer} tr.info:hover td{background:var(--navy-soft)}
+tr.detail td{background:var(--ground);font-size:12px;color:var(--muted);line-height:1.7}
+tr.detail code{font-family:"IBM Plex Mono",monospace;font-size:11px;background:var(--navy-soft);padding:1px 5px;border-radius:4px;color:var(--text)}
+footer{margin-top:40px;font-size:11.5px;color:var(--muted);line-height:1.7}
+footer a{color:var(--accent-ink)}
+@media (max-width:680px){ .tag{flex-wrap:wrap;gap:6px 10px} main{padding:18px 14px 48px} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<header>
+  <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z"/><path d="M9.5 12l2 2 3.5-4"/></svg>
+  <h1>Veil PII Playground</h1><span>한국어 개인정보 탐지기 4종 동시 비교 · 입력은 저장되지 않습니다</span>
+</header>
+<main>
+  <div class="search">
+    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <textarea id="text" rows="2" placeholder="개인정보가 섞인 문장을 붙여 넣으세요 — 예: 김철수 고객님 010-1234-5678 로 연락드렸습니다" aria-label="탐지할 문장"></textarea>
+    <div class="side"><button id="run" type="button">탐지 실행 <span style="opacity:.7">⌘↵</span></button><span class="cnt" id="cnt">0 / 2,000</span></div>
+  </div>
+  <div class="chips" id="chips"><span class="lbl">예시 문장</span></div>
+  <div class="why" id="why" hidden></div>
+  <div class="rows" id="rows"></div>
+  <div class="legend">
+    <span style="--c:var(--g-person)">사람</span><span style="--c:var(--g-contact)">연락처·주소망</span><span style="--c:var(--g-fin)">금융</span><span style="--c:var(--g-id)">식별번호</span><span style="--c:var(--g-place)">날짜·주소</span><span style="--c:var(--g-org)">조직</span><span style="--c:var(--g-miss)">점선 = 정답인데 놓침 (예시 문장에서만)</span>
+  </div>
+  <h2>모델 정보 <span style="font-weight:400;color:var(--muted);font-size:12px">— 행을 누르면 지원 라벨과 주의점</span></h2>
+  <div class="wrap"><table id="mtable"><thead><tr><th>모델</th><th>최초 공개</th><th>크기</th><th>라벨</th><th>라이선스</th><th>KDPII test F1</th><th>BCCard val(ko) F1</th><th>실행</th></tr></thead><tbody></tbody></table></div>
+  <footer>
+    벤치 수치는 모두 같은 스코어러(문자 오프셋 exact-match span F1)·같은 디코더로 잰 값이며 근거는 Veil-PII-Ko-Lite 의 EVIDENCE.md 에 있습니다. 입력 문장은 서버에 기록되지 않습니다. Azure 호출은 분당 횟수 제한이 있습니다.<br>
+    BCCard MoAI-Privacy-Filter 는 BC카드가 Apache 2.0 으로 공개한 모델을 그대로 사용했습니다. Presidio 같은 프레임워크는 비교 대상이 아니라 이런 모델을 끼워 쓰는 자리입니다.
+  </footer>
+</main>
+<script>
+const GROUP = {PERSON:"person", ORGANIZATION:"org", DATE:"place", ADDRESS:"place", ZIPCODE:"place",
+  PHONE:"contact", EMAIL:"contact", URL:"contact", IPADDRESS:"contact", MACADDRESS:"contact", PORT:"contact",
+  CARD_NUMBER:"fin", ACCOUNT_NUMBER:"fin", CARD_EXPIRY:"fin", CVC:"fin", VIRTUAL_CARD_NUMBER:"fin", TRANSACTION_APPROVAL_ID:"fin"};
+const grp = l => GROUP[l] || "id";
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $ = id => document.getElementById(id);
+const MAX = 2000;
+let MODELS = [], SCEN = [], HEALTH = {}, gold = null, seq = 0;
+
+// ---- 색칠: 예측 스팬 + (예시 문장이면) 어떤 예측과도 안 겹치는 정답을 점선으로
+function paint(text, spans, gold){
+  const marks = spans.map(s => ({...s, miss:false}));
+  if (gold) for (const g of gold){
+    const exact = spans.some(p => p.start===g.start && p.end===g.end && p.label===g.label);
+    const overlap = spans.some(p => p.start < g.end && g.start < p.end);
+    if (!exact && !overlap) marks.push({...g, miss:true});
+  }
+  marks.sort((a,b) => a.start-b.start);
+  let out = "", i = 0;
+  for (const m of marks){
+    if (m.start < i) continue;                       // 서버가 비겹침 보장, 방어만
+    out += esc(text.slice(i, m.start));
+    const cls = m.miss ? "miss" : grp(m.label);
+    out += `<mark class="${cls}" data-s="${m.start}" data-e="${m.end}" title="${m.miss ? "정답: " : ""}${m.label}${m.score!=null ? " · "+m.score : ""}">${esc(text.slice(m.start, m.end))}<small>${m.label}</small></mark>`;
+    i = m.end;
+  }
+  return out + esc(text.slice(i));
+}
+function tally(spans, gold){
+  if (!gold) return `${spans.length} spans`;
+  const hit = gold.filter(g => spans.some(p => p.start===g.start && p.end===g.end && p.label===g.label)).length;
+  const fp = spans.filter(p => !gold.some(g => g.start===p.start && g.end===p.end && g.label===p.label)).length;
+  const cls = (hit===gold.length && fp===0) ? "ok" : "bad";
+  return `<span class="${cls}">${hit} / ${gold.length} 정답 일치</span>${fp ? ` · 오탐 ${fp}` : ""}`;
+}
+
+// ---- 행 렌더
+function rowEl(m){
+  return `<div class="row${m.ours ? " ours" : ""}" id="row-${m.id}"><div class="tag"><b>${esc(m.name)}</b><i id="ms-${m.id}">${esc(m.params)} · ${esc(m.runtime.split(" · ")[0])}</i><span class="n" id="n-${m.id}">${m.labels} labels</span></div><div class="txt wait" id="txt-${m.id}">문장을 입력하고 탐지 실행을 누르세요</div></div>`;
+}
+function fillRow(m, res, text){
+  $(`txt-${m.id}`).className = "txt"; $(`txt-${m.id}`).innerHTML = paint(text, res.spans, gold);
+  $(`ms-${m.id}`).textContent = `${res.ms.toLocaleString()} ms · ${m.params}`;
+  $(`n-${m.id}`).innerHTML = tally(res.spans, gold);
+}
+function failRow(m, msg, text){
+  const t = $(`txt-${m.id}`); t.className = "txt err"; t.innerHTML = `${esc(msg)} <button type="button">재시도</button>`;
+  t.querySelector("button").onclick = () => runOne(m, text, seq);
+}
+async function runOne(m, text, mySeq){
+  const t = $(`txt-${m.id}`);
+  if (HEALTH[m.id] !== "ready"){ t.className = "txt wait"; t.textContent = HEALTH[m.id] ? `이 서버에서 로드 실패: ${HEALTH[m.id]}` : "이 환경에서는 꺼져 있는 모델입니다 (VM 배포본에서 켜짐)"; $(`ms-${m.id}`).textContent = `— · ${m.params}`; return; }
+  t.className = "txt wait"; t.textContent = "탐지 중…";
+  $(`ms-${m.id}`).textContent = `… · ${m.params}`;
+  try{
+    const r = await fetch("/api/detect", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text, model:m.id})});
+    if (mySeq !== seq) return;                                  // 더 새로운 실행이 있으면 버린다
+    if (!r.ok){ const d = await r.json().catch(() => ({})); failRow(m, d.detail || `HTTP ${r.status}`, text); return; }
+    fillRow(m, await r.json(), text);
+  }catch(e){ if (mySeq === seq) failRow(m, "네트워크 오류", text); }
+}
+function runAll(){
+  const text = $("text").value; if (!text.trim() || text.length > MAX) return;
+  seq++; MODELS.forEach(m => runOne(m, text, seq));             // 4개 병렬, 도착 순서대로 채움
+}
+
+// ---- 입력·칩
+function setCount(){ const n = $("text").value.length; const c = $("cnt"); c.textContent = `${n.toLocaleString()} / ${MAX.toLocaleString()}`; c.classList.toggle("over", n > MAX); $("run").disabled = n === 0 || n > MAX; }
+function autoGrow(){ const t = $("text"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 220) + "px"; }
+function pick(s){
+  document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c.dataset.id === (s && s.id)));
+  if (s){ $("text").value = s.text; gold = s.gold; $("why").hidden = false; $("why").textContent = s.why; }
+  else { gold = null; $("why").hidden = true; }
+  setCount(); autoGrow();
+}
+$("text").addEventListener("input", () => { pick(null); });
+$("text").addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter"){ e.preventDefault(); runAll(); } });
+$("run").addEventListener("click", runAll);
+
+// ---- hover 동기화: 같은 구간을 다른 행에서도 강조
+document.addEventListener("mouseover", e => {
+  const m = e.target.closest("mark"); if (!m) return;
+  const s = +m.dataset.s, en = +m.dataset.e;
+  document.querySelectorAll("mark").forEach(x => x.classList.toggle("hl", +x.dataset.s < en && s < +x.dataset.e));
+});
+document.addEventListener("mouseout", e => { if (e.target.closest("mark")) document.querySelectorAll("mark.hl").forEach(x => x.classList.remove("hl")); });
+
+// ---- 모델 표
+function mtable(){
+  const tb = $("mtable").querySelector("tbody"); tb.innerHTML = "";
+  for (const m of MODELS){
+    const b = m.bench || {}; const f = v => v == null ? "—" : v.toFixed(3);
+    const k = b.kdpii_test_9labels ? `${f(b.kdpii_test)} (9라벨 ${f(b.kdpii_test_9labels)})` : f(b.kdpii_test);
+    const tr = document.createElement("tr"); tr.className = "info"; tr.tabIndex = 0;
+    tr.innerHTML = `<td><b>${esc(m.name)}</b>${m.ours ? ' <span style="color:var(--accent-ink);font-size:11px;font-weight:600;white-space:nowrap">우리 모델</span>' : ""}</td><td class="num">${esc(m.released)}</td><td class="num">${esc(m.params)} · ${esc(m.size)}</td><td class="num">${m.labels}</td><td>${esc(m.license)}</td><td class="num">${k}</td><td class="num">${f(b.bccard_val_ko)}</td><td>${esc(m.runtime)}</td>`;
+    const det = document.createElement("tr"); det.className = "detail"; det.hidden = true;
+    det.innerHTML = `<td colspan="8">${esc(m.summary)}<br><b style="color:var(--signal)">주의</b> ${esc(m.caveat)}<br>백본 ${esc(m.backbone)} · 지원 라벨: ${m.label_list.map(l => `<code>${l}</code>`).join(" ")}<br><a href="${esc(m.link)}" target="_blank" rel="noopener">출처</a></td>`;
+    const tog = () => { det.hidden = !det.hidden; };
+    tr.onclick = tog; tr.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tog(); } };
+    tb.append(tr, det);
+  }
+}
+
+// ---- 시작: 모델·시나리오 로드 → 시나리오 ① 자동 실행
+(async () => {
+  [MODELS, SCEN, HEALTH] = await Promise.all([fetch("/api/models").then(r => r.json()), fetch("/api/scenarios").then(r => r.json()), fetch("/healthz").then(r => r.json()).catch(() => ({}))]);
+  MODELS.sort((a,b) => a.order - b.order);
+  $("rows").innerHTML = MODELS.map(rowEl).join("");
+  for (const s of SCEN){ const b = document.createElement("button"); b.className = "chip"; b.type = "button"; b.dataset.id = s.id; b.textContent = s.title; b.onclick = () => { pick(s); runAll(); }; $("chips").append(b); }
+  mtable();
+  if (SCEN.length){ pick(SCEN[0]); runAll(); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "담당자 {PERSON}({PHONE})에게 문의 바랍니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "담당자 {PERSON} ({PHONE})에게 연락 주세요."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "담당자는 {PERSON}입니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON} 고객님 안녕하세요."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON} 씨 문의 건입니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON}씨가 전화했어요."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON}님 계약 건 확인했습니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON} 대리가 처리했습니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON} 과장님께 전달했습니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "저는 {PERSON}라고 합니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "저는 {PERSON}입니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "고객명: {PERSON}"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "이름: {PERSON}, 연락처: {PHONE}"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "성함이 {PERSON} 맞으실까요?"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "네, {PERSON}이고 {PHONE} 맞습니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "수령인 {PERSON}, 주소 {ADDRESS}"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON} 님께서 {DATE}에 신청하셨습니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "안녕하세요 {PERSON}입니다. 요금제 변경 문의드려요."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON}에게 {ACCOUNT_NUMBER}로 입금했습니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "청구인 {PERSON}의 주민번호는 {RRN}입니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON}({DATE}생) 환자 예약 확인"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON}/{PHONE}/{EMAIL}"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "본인 {PERSON}은 위 내용에 동의합니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON} 외 2인 예약"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "[{ORGANIZATION}] {PERSON} 고객님, {DATE} 결제 예정입니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON}이랑 {PERSON} 둘 다 참석해."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "회신: {PERSON} 드림"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "받는 사람 {PERSON} / 보내는 사람 {PERSON}"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON}(만 34세)"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON} 팀장, {PERSON} 사원 참석"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "명의자 {PERSON}, 가입번호 {SUBSCRIBER_ID}"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON}님의 단말 S/N {DEVICE_SERIAL} 등록"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "차량 {VEHICLE_PLATE} 소유자 {PERSON}"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON}: 네 확인했습니다."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "{PERSON}> 오늘 몇 시에 와?"}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "홍길동 대신 {PERSON}으로 예시 이름을 바꿔주세요."}
+{"genre": "이름 문맥(수작업)", "style": "혼합", "text": "샘플 이름 김철수 대신 실제 이름 {PERSON}을 입력하세요."}

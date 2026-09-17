@@ -1,0 +1,8 @@
+.venv
+runs
+logs
+data/raw
+hf
+pylib
+__pycache__
+*.pyc

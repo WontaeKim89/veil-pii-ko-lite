@@ -1,0 +1,73 @@
+# Veil-PII-Ko-Lite 라벨 스키마 (32종). 모델은 전부 학습한다.
+# kind: format = 포맷 검증 가능 / context = 문맥으로만 판단 / mixed
+labels:
+  PERSON:                  {kind: context}
+  ADDRESS:                 {kind: context}
+  ORGANIZATION:            {kind: context}
+  DATE:                    {kind: mixed}
+  GENERIC_ID:              {kind: mixed}
+  USER_ID:                 {kind: mixed}
+  SECRET:                  {kind: mixed}
+  SSN:                     {kind: format}
+  RRN:                     {kind: format}
+  FRN:                     {kind: format}
+  BUSINESS_ID:             {kind: format}
+  PASSPORT:                {kind: format}
+  DRIVER_LICENSE:          {kind: format}
+  CI:                      {kind: format}
+  IPIN:                    {kind: format}
+  CARD_NUMBER:             {kind: format}
+  CARD_EXPIRY:             {kind: format}
+  CVC:                     {kind: format}
+  VIRTUAL_CARD_NUMBER:     {kind: format}
+  ACCOUNT_NUMBER:          {kind: format}
+  TRANSACTION_APPROVAL_ID: {kind: format}
+  EMAIL:                   {kind: format}
+  PHONE:                   {kind: format}
+  IPADDRESS:               {kind: format}
+  MACADDRESS:              {kind: format}
+  PORT:                    {kind: format}
+  URL:                     {kind: format}
+  ZIPCODE:                 {kind: format}
+  IMEI:                    {kind: format}
+  VEHICLE_PLATE:           {kind: format}   # 신규 — KDPII 실데이터
+  SUBSCRIBER_ID:           {kind: mixed}    # 신규 — 서비스 가입/계약/회선 식별자(일반화)
+  DEVICE_SERIAL:           {kind: format}   # 신규 — 단말 일련번호(S/N)
+
+# 외부 데이터셋 → 우리 라벨. null = O 로 취급(스키마 밖)
+map:
+  kdpii:
+    PS_NAME: PERSON
+    PS_NICKNAME: PERSON
+    PS_ID: USER_ID
+    LC_ADDRESS: ADDRESS
+    LC_PLACE: ADDRESS          # 도시·장소명. BCCard 가 '서울특별시' 를 ADDRESS 로 보는 관행과 정렬
+    LCP_COUNTRY: null
+    OG_WORKPLACE: ORGANIZATION
+    OG_DEPARTMENT: ORGANIZATION
+    OGG_EDUCATION: ORGANIZATION
+    OGG_CLUB: ORGANIZATION
+    OGG_RELIGION: null
+    CV_POSITION: null
+    CV_SEX: null
+    CV_MILITARY_CAMP: ORGANIZATION
+    FD_MAJOR: null
+    DT_BIRTH: DATE
+    QT_AGE: null
+    QT_LENGTH: null
+    QT_WEIGHT: null
+    QT_GRADE: null
+    TM_BLOOD_TYPE: null
+    QT_CARD_NUMBER: CARD_NUMBER
+    QT_ACCOUNT_NUMBER: ACCOUNT_NUMBER
+    QT_MOBILE: PHONE
+    QT_PHONE: PHONE
+    TMI_EMAIL: EMAIL
+    TMI_SITE: URL
+    QT_IP: IPADDRESS
+    QT_RESIDENT_NUMBER: RRN
+    QT_ALIEN_NUMBER: FRN
+    QT_PASSPORT_NUMBER: PASSPORT
+    QT_DRIVER_NUMBER: DRIVER_LICENSE
+    QT_PLATE_NUMBER: VEHICLE_PLATE
+  bccard: {}   # 동일 이름

@@ -1,0 +1,16 @@
+.venv
+.git
+data
+runs
+hf
+pylib
+pylib_ort
+logs
+export
+tests
+docs
+release/fp32
+release/*.int4.onnx
+**/__pycache__
+**/*.pyc
+playground/.env
