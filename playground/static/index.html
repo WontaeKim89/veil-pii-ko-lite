@@ -115,7 +115,7 @@ footer a{color:var(--accent-ink)}
 <body>
 <header>
   <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z"/><path d="M9.5 12l2 2 3.5-4"/></svg>
-  <h1>Veil PII Playground</h1><span>한국어 개인정보 탐지기 4종 동시 비교 · 입력은 저장되지 않습니다</span>
+  <h1>Veil PII Playground</h1>
 </header>
 <main>
   <div class="top">
@@ -125,21 +125,15 @@ footer a{color:var(--accent-ink)}
     <div class="side"><button id="run" type="button">탐지 실행 <span style="opacity:.7">⌘↵</span></button><span class="cnt" id="cnt">0 / 2,000</span></div>
   </div>
   <div class="chips" id="chips"><span class="lbl">예시 문장</span></div>
-  <div class="why" id="why" hidden></div>
   </div>
   <div class="rows" id="rows"></div>
   <div class="legend">
     <span style="--c:var(--g-person)">사람</span><span style="--c:var(--g-contact)">연락처·주소망</span><span style="--c:var(--g-fin)">금융</span><span style="--c:var(--g-id)">식별번호</span><span style="--c:var(--g-place)">날짜·주소</span><span style="--c:var(--g-org)">조직</span><span class="lg-miss">회색 점선 = 못 잡음</span><span class="lg-fp">붉은 점선 = 오탐</span><span class="lg-part">밑줄 점선 = 경계 불일치</span><span style="margin-left:2px">(예시 문장에서만 판정)</span>
   </div>
   <section class="ref"><div class="in">
-    <div class="rh"><span class="eb">Reference</span><h2>모델 비교표</h2><span class="sub">같은 스코어러(문자 오프셋 exact F1)·같은 디코더로 측정 · 2026-09-17 · 행을 누르면 요약·주의점·지원 라벨</span></div>
+    <div class="rh"><span class="eb">Reference</span><h2>모델 비교표</h2></div>
     <div class="wrap"><table id="mtable"><thead><tr><th>모델</th><th>파라미터 · 배포</th><th>라벨</th><th>라이선스</th><th>KDPII test F1</th><th>BCCard val(ko) F1</th><th>합성 heldout F1</th><th>실행</th></tr></thead><tbody></tbody></table></div>
-    <p class="note">KDPII test 4,891문장(실제 대화체) · BCCard validation ko 10,743행 · 합성 heldout 670행. FrameByFrame 은 KDPII 만 측정(9라벨 한정 0.682). 막대는 F1 비율.</p>
   </div></section>
-  <footer>
-    벤치 수치는 모두 같은 스코어러(문자 오프셋 exact-match span F1)·같은 디코더로 잰 값이며 근거는 Veil-PII-Ko-Lite 의 EVIDENCE.md 에 있습니다. 입력 문장은 서버에 기록되지 않습니다. Azure 호출은 분당 횟수 제한이 있습니다.<br>
-    BCCard MoAI-Privacy-Filter 는 BC카드가 Apache 2.0 으로 공개한 모델을 그대로 사용했습니다. Presidio 같은 프레임워크는 비교 대상이 아니라 이런 모델을 끼워 쓰는 자리입니다.
-  </footer>
 </main>
 <script>
 const GROUP = {PERSON:"person", ORGANIZATION:"org", DATE:"place", ADDRESS:"place", ZIPCODE:"place",
@@ -219,8 +213,8 @@ function setCount(){ const n = $("text").value.length; const c = $("cnt"); c.tex
 function autoGrow(){ const t = $("text"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 220) + "px"; }
 function pick(s){
   document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c.dataset.id === (s && s.id)));
-  if (s){ $("text").value = s.text; gold = s.gold; $("why").hidden = false; $("why").textContent = s.why; }
-  else { gold = null; $("why").hidden = true; }
+  if (s){ $("text").value = s.text; gold = s.gold; }
+  else { gold = null; }
   setCount(); autoGrow();
 }
 $("text").addEventListener("input", () => { pick(null); });
