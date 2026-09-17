@@ -68,29 +68,25 @@ model-index:
 
 <img src="assets/banner.svg" alt="Veil-PII-Ko-Lite" width="100%"/>
 
-**Lightweight Korean PII detector that beats 1.4B-parameter baselines and a cloud API — on CPU.**
-<br>한국어 개인정보 32종을 잡는 110M 경량 NER. 공개 벤치 3축에서 1.4B 모델과 Azure AI Language 를 같은 자로 앞선다.
+한국어 개인정보 탐지용 토큰 분류 모델. KoELECTRA-base-v3 (110M) 를 32 라벨로 파인튜닝했고, INT8 ONNX 로 CPU 에서 돌아간다.
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-2ea44f?style=flat-square)](#라이선스--고지)
-[![Params](https://img.shields.io/badge/params-110M-1b2450?style=flat-square)](#모델)
-[![ONNX INT8](https://img.shields.io/badge/ONNX%20INT8-143%20MB%20%C2%B7%20lossless-167e6c?style=flat-square)](#양자화--지연시간)
-[![Labels](https://img.shields.io/badge/labels-32-5c6473?style=flat-square)](#라벨-32)
+[![ONNX](https://img.shields.io/badge/ONNX%20INT8-143%20MB-167e6c?style=flat-square)](#파일)
 [![GitHub](https://img.shields.io/badge/GitHub-WontaeKim89%2Fveil--pii--ko--lite-181717?style=flat-square&logo=github)](https://github.com/WontaeKim89/veil-pii-ko-lite)
-[![Evidence](https://img.shields.io/badge/evidence-EVIDENCE.md-ec652b?style=flat-square)](EVIDENCE.md)
 
 </div>
 
 ---
 
-## ✨ Highlights
+## 개요
 
-- **정확도** — KDPII test(실제 대화체) exact F1 **0.934** vs BCCard MoAI-Privacy-Filter(1.4B) 0.453 · FrameByFrame(1.4B) 0.516 · Azure AI Language PII 0.463. BCCard 자체 validation 에서도 **0.983** vs 0.959.
-- **경량** — KoELECTRA-base-v3 **110M**. weight-only INT8 ONNX **143 MB**, fp32 와 정확도 동일. GPU 없이 CPU 4스레드에서 128 토큰 61 ms.
-- **한국 특화 32 라벨** — 주민번호 · 외국인등록번호 · 사업자번호 · CI · 아이핀 · 카드/계좌 · 차량번호 · 가입번호 · 단말 S/N 까지. 문맥 항목(이름·주소·조직)도 모델이 직접 잡는다.
-- **자체완결 디코더** — `veil.py` 하나에 제약 BIOES Viterbi · 슬라이딩 창 병합 · 조사 제거가 들어 있어 `[{start, end, label, score}]` 를 바로 돌려준다. `torch` 불필요.
-- **재현 가능** — 모든 베이스라인을 같은 스코어러·같은 디코더로 쟀고, 한 명령으로 다시 계산할 수 있다.
+사내 LLM 에이전트 앞단에 붙일 개인정보 마스킹용으로 만들었다. 폐쇄망 CPU 에서 돌아야 했고, 주민번호·사업자번호·CI 같은 한국 식별자와 이름·주소 같은 문맥 항목을 한 모델이 다 잡아야 했다. 공개된 후보(BCCard MoAI-Privacy-Filter, FrameByFrame, Azure AI Language PII, Presidio)는 크기·라벨 범위·한국어 실문장 성능 중 하나씩이 비어 있어서 직접 학습했다.
 
-## 📊 Benchmarks
+- 라벨 32종. BCCard 29종에 차량번호·가입번호·단말 S/N 을 더했다.
+- `veil.py` 에 제약 BIOES Viterbi, 슬라이딩 창 병합, 조사 제거가 들어 있어 `[{start, end, label, score}]` 를 바로 돌려준다. `torch` 없이 `onnxruntime` 만 있으면 된다.
+- 베이스라인은 전부 같은 스코어러·같은 디코더로 다시 쟀고, 아래 재현 절차로 다시 계산할 수 있다.
+
+## 벤치마크
 
 문자 오프셋 exact-match span F1 (micro). 모든 모델을 **같은 스코어러·같은 디코더**로 측정.
 
@@ -105,7 +101,7 @@ model-index:
 
 <sub>¹ BCCard 모델 카드의 자체 보고치 0.9824 는 측정 방식이 공개돼 있지 않다. 위 값은 이 리포의 스코어러·디코더로 동일 조건에서 잰 값. 베이스라인의 "자기 라벨 한정" F1(BCCard 29라벨 0.4636 / Azure 매핑 라벨 0.4741)로 좁혀도 격차는 유지된다. per-entity 수치는 `eval_*.json`, 측정 조건은 `EVIDENCE.md`.</sub>
 
-## ⚡ Quickstart
+## 사용법
 
 ```bash
 pip install onnxruntime transformers numpy
@@ -146,7 +142,7 @@ model = AutoModelForTokenClassification.from_pretrained("1T/veil-pii-ko-lite")
 - 최대 입력 길이 제한 없음 — 512 토큰 창을 128 겹쳐 밀며 창 경계 스팬을 병합한다.
 </details>
 
-## 🏷️ 라벨 (32)
+## 라벨 (32)
 
 | 그룹 | 라벨 |
 |---|---|
@@ -159,9 +155,9 @@ model = AutoModelForTokenClassification.from_pretrained("1T/veil-pii-ko-lite")
 
 BCCard 29종 + **`VEHICLE_PLATE` `SUBSCRIBER_ID` `DEVICE_SERIAL`** 신규 3종. 태깅은 BIOES(129 클래스), `config.json` 의 `id2label` 참조.
 
-## 🧪 실사용 시나리오
+## 실사용 시나리오
 
-벤치 밖 체감 검증. 실제 상담·양식 문장을 4개 모델에 돌린 결과(정답 일치 / 정답 수, +오탐). 못 잡은 것과 과탐도 그대로 적는다.
+상담·양식 형태의 문장 11개를 만들어 4개 모델에 돌렸다. 정답 일치 / 정답 수, +오탐. 아래는 그중 차이가 난 것들.
 
 | 시나리오 | Veil | BCCard 1.4B | FrameByFrame 1.4B | Azure |
 |---|---:|---:|---:|---:|
@@ -173,9 +169,9 @@ BCCard 29종 + **`VEHICLE_PLATE` `SUBSCRIBER_ID` `DEVICE_SERIAL`** 신규 3종. 
 | 이름 닮은 일반명사 — 정답은 무검출 | 오탐 2 | 오탐 2 | 오탐 2 | **0** |
 | 코드·해시·ISBN — 정답은 무검출 | 오탐 2 | 오탐 4 | 오탐 5 | **0** |
 
-Veil 이 틀린 것: 주소 끝 `12층` 누락, 영문 조직명 `Hanwha Life` 미검출, 대괄호 안 ISO 날짜·`지난달 25일` 미검출, `전결`→PERSON · 커밋 해시→SECRET · ISBN→ACCOUNT_NUMBER 과탐.
+이 모델이 틀린 것: 주소 끝 `12층` 누락, 영문 조직명 `Hanwha Life` 미검출, 대괄호 안 ISO 날짜·`지난달 25일` 미검출, `전결`→PERSON · 커밋 해시→SECRET · ISBN→ACCOUNT_NUMBER 과탐.
 
-## 🛠️ How it was built
+## 개발 과정
 
 <details>
 <summary><b>왜 만들었나</b></summary>
@@ -237,14 +233,14 @@ mDeBERTa 의 exact 0.39 / partial 0.93 격차가 "디코더 경계 처리" 문�
 <details>
 <summary><b>시행착오에서 배운 것</b></summary>
 
-- **가장 큰 도약(+5.4pt)은 학습이 아니라 디코더 오류 분석**에서 나왔다 — 창 내부 인접 스팬 과병합과 조사 포함을 고치자 KDPII 0.880 → 0.934, 재학습 없이.
-- 벤치 최고점이던 v3b 는 **김철수·홍길동·이영희를 못 잡았다**. LLM 이 만든 템플릿에 예시 이름이 플레이스홀더 없이 1,300회 들어가 O 로 학습된 데이터 결함. 자동 플레이스홀더로 고친 v4 가 최종(프로브 17/17, 벤치 동률).
+- 가장 큰 점수 변화(+5.4pt)는 학습이 아니라 디코더 쪽에서 나왔다. 창 안에서 인접 스팬을 과하게 합치고 조사를 스팬에 넣던 걸 고치니 KDPII 0.880 → 0.934, 재학습 없이.
+- 벤치 점수가 가장 높던 v3b 는 김철수·홍길동·이영희를 못 잡았다. LLM 이 만든 템플릿에 예시 이름이 플레이스홀더 없이 1,300회 들어가 O 로 학습된 데이터 결함. 자동 플레이스홀더로 고친 v4 가 최종(프로브 17/17, 벤치 동률).
 - 첫 CPU 벤치 "3.6ms" 는 더미 입력이 `[UNK]` 하나로 축약된 벤치 버그였다. 정정 수치만 쓴다.
-- 베이스라인 측정에서 발견한 버그(FrameByFrame 라벨 매핑 순서, Azure 언어 필터, 호격 조사 `아` 절단)는 모두 **베이스라인에 유리한 방향으로 재측정**했다.
+- 베이스라인 측정에서 발견한 버그(FrameByFrame 라벨 매핑 순서, Azure 언어 필터, 호격 조사 `아` 절단)는 모두 베이스라인에 유리한 방향으로 재측정했다.
 - BCCard 가중 ×2, 가중치 평균(soup)은 효과가 없었다.
 </details>
 
-## ⚠️ Limitations
+## 한계
 
 - **CPU 지연** — 4 vCPU 에서 512 토큰 237 ms(INT8), 128 토큰 61 ms, 16 스레드 512 토큰 108 ms. 실시간 짧은 문장엔 충분하나 장문 일괄 처리는 스레드를 늘려야 한다. 원래 목표(40 ms)는 미달.
 - 커밋 해시·ISBN 같은 코드를 `SECRET`·`ACCOUNT_NUMBER` 로, 일부 단어(`전결`)를 이름으로 과탐하는 경우가 있다. 한 절에 희귀 식별자가 3개 이상 몰리면 하나를 놓치는 경향.
@@ -252,7 +248,7 @@ mDeBERTa 의 exact 0.39 / partial 0.93 격차가 "디코더 경계 처리" 문�
 - 2020-10 이후 발급 주민번호는 체크섬이 없어 형태만으로 판정. 외국인 이름·닉네임·초성 표기는 재현율이 낮다.
 - 사람이 라벨링한 도메인 골든셋 평가는 아직 없다.
 
-## 🔁 Reproduce
+## 재현
 
 ```bash
 git clone https://github.com/WontaeKim89/veil-pii-ko-lite && cd veil-pii-ko-lite
@@ -260,7 +256,7 @@ pip install -r scripts/requirements-repro.txt
 bash scripts/reproduce_claims.sh release   # 공개 데이터 다운로드 → Veil INT8/fp32 · BCCard 베이스라인 평가 → 표 (CPU 8스레드 ~40분)
 ```
 
-## 📦 Files
+## 파일
 
 | 파일 | 설명 |
 |---|---|
@@ -272,7 +268,7 @@ bash scripts/reproduce_claims.sh release   # 공개 데이터 다운로드 → V
 | `EVIDENCE.md` `eval_*.json` | 주장별 근거표 · per-entity 수치 |
 | `reproduce_claims.sh` `requirements-repro.txt` | 재현 |
 
-## 📖 Citation
+## 인용
 
 ```bibtex
 @misc{veil-pii-ko-lite-2026,

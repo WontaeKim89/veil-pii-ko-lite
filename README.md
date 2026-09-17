@@ -1,7 +1,6 @@
 # Veil-PII-Ko-Lite
 
-한국어·영어 개인정보(PII) 탐지 NER 모델 — **110M 파라미터(KoELECTRA-base-v3) · 32 라벨 · INT8 ONNX 143MB · Apache 2.0**.
-공개 벤치마크 3축에서 1.4B 급 모델(BCCard MoAI-Privacy-Filter)과 클라우드 API(Azure AI Language PII)를 같은 스코어러로 앞선다.
+한국어·영어 개인정보 탐지용 토큰 분류 모델. KoELECTRA-base-v3 (110M) 를 32 라벨로 파인튜닝했고 INT8 ONNX(143MB)로 CPU 에서 돌린다. 학습 데이터 준비부터 평가·양자화·비교 데모까지 이 레포에 있다.
 
 - 모델 가중치: **https://huggingface.co/1T/veil-pii-ko-lite** (fp32 safetensors + INT8 ONNX + 디코더)
 - 근거표·측정 조건: [`release/EVIDENCE.md`](release/EVIDENCE.md) · 모델 카드: [`release/MODEL_CARD.md`](release/MODEL_CARD.md)
@@ -19,9 +18,9 @@
 
 ---
 
-## 1. 개발 동기
+## 1. 왜 만들었나
 
-사내 LLM 에이전트에 개인정보 마스킹 계층을 넣기 위해 한국어 PII 탐지 모델을 조사했으나, 폐쇄망 프로덕션 조건(경량 · 한국어 카테고리 폭 · 한국어 실문장 성능 · 고지 의무 없는 라이선스)을 동시에 만족하는 공개 모델이 없었다.
+사내 LLM 에이전트 앞단에 개인정보 마스킹을 넣으려고 한국어 PII 모델을 찾아봤다. 폐쇄망 CPU 에서 돌아야 하고, 한국 식별자를 넓게 잡아야 하고, 실제 상담 문장에서 이름·주소를 문맥으로 잡아야 하고, 고지 의무 없이 상업적으로 써야 했다. 네 가지를 다 만족하는 공개 모델이 없었다.
 
 | 후보 | 내용 | 도입을 막은 이유 |
 |---|---|---|
@@ -128,7 +127,7 @@ KDPII test F1 추이: shootout 0.879 → v1 0.881 → v2 0.880 → **디코더 �
 | ⑩ | 코드·해시·좌표·ISBN (무검출) | 오탐 2 | 오탐 4 | 오탐 5 | **0** |
 | ⑪ | 시간·기간·연식 표현 (무검출) | **0** | 오탐 1 | **0** | **0** |
 
-Veil 이 놓친 것도 그대로 적는다: ① 주소 끝 '12층', ⑦ 영문 조직명, ⑧ 대괄호 안 ISO 날짜·'지난달 25일', ⑨·⑩ 의 과탐('전결'→PERSON, 커밋 해시→SECRET, ISBN→ACCOUNT_NUMBER).
+이 모델이 놓친 것: ① 주소 끝 '12층', ⑦ 영문 조직명, ⑧ 대괄호 안 ISO 날짜·'지난달 25일', ⑨·⑩ 의 과탐('전결'→PERSON, 커밋 해시→SECRET, ISBN→ACCOUNT_NUMBER).
 
 ## 10. 한계
 
