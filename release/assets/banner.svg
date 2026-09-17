@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-label="Veil-PII-Ko-Lite">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f1330"/><stop offset="1" stop-color="#1b2450"/></linearGradient>
+    <linearGradient id="a" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#44b48b"/><stop offset="1" stop-color="#167e6c"/></linearGradient>
+  </defs>
+  <rect width="1200" height="300" rx="20" fill="url(#g)"/>
+  <g transform="translate(70,78)" fill="none" stroke="url(#a)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M60 6l52 22v38c0 38-26 64-52 76-26-12-52-38-52-76V28z"/><path d="M40 70l14 14 28-32"/>
+  </g>
+  <text x="220" y="118" font-family="Inter, 'IBM Plex Sans KR', 'Noto Sans KR', -apple-system, sans-serif" font-size="58" font-weight="800" fill="#ffffff" letter-spacing="-1.5">Veil-PII-Ko-Lite</text>
+  <text x="222" y="160" font-family="Inter, 'IBM Plex Sans KR', 'Noto Sans KR', -apple-system, sans-serif" font-size="22" fill="#b7bfe0">Korean PII detection · 110M KoELECTRA · 32 labels · INT8 ONNX 143 MB · Apache 2.0</text>
+  <g font-family="'IBM Plex Mono', ui-monospace, Menlo, monospace" font-size="15" fill="#8fe0c0">
+    <rect x="222" y="196" width="262" height="46" rx="10" fill="#141a3d" stroke="#2a3060"/><text x="238" y="225">KDPII test F1  0.934  (1.4B: 0.453)</text>
+    <rect x="498" y="196" width="278" height="46" rx="10" fill="#141a3d" stroke="#2a3060"/><text x="514" y="225">BCCard val F1  0.983  (1.4B: 0.959)</text>
+    <rect x="790" y="196" width="230" height="46" rx="10" fill="#141a3d" stroke="#2a3060"/><text x="806" y="225">CPU only · 61 ms / 128 tok</text>
+  </g>
+</svg>

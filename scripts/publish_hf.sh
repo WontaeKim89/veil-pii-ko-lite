@@ -14,6 +14,7 @@ for f in src.glob("fp32/*"): shutil.copy(f, tmp / f.name)
 for f in ["model.int8.onnx", "veil.py", "labels.yaml", "EVIDENCE.md", "reproduce_claims.sh", "requirements-repro.txt"]:
     if (src / f).exists(): shutil.copy(src / f, tmp / f)
 shutil.copy(src / "MODEL_CARD.md", tmp / "README.md")
+if (src / "assets").is_dir(): shutil.copytree(src / "assets", tmp / "assets")
 api.upload_folder(repo_id=repo, folder_path=str(tmp), commit_message="Veil-PII-Ko-Lite v4: fp32 safetensors + INT8 ONNX + decoder")
 print("uploaded →", f"https://huggingface.co/{repo}")
 EOF
