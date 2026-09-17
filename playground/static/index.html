@@ -21,12 +21,12 @@ header h1{font-size:16px;margin:0;color:var(--ink);font-weight:700;letter-spacin
 header span{color:var(--muted);font-size:12px}
 main{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
 .top{max-width:1080px;margin:0 auto}
-.search{display:flex;align-items:flex-start;gap:12px;padding:12px 14px 12px 18px;border:1px solid var(--line);border-radius:20px;background:var(--surface);transition:border-color .15s}
+.search{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 18px;border:1px solid var(--line);border-radius:999px;background:var(--surface);transition:border-color .15s}
 .search:focus-within{border-color:var(--accent-ink)}
-.search .ico{flex:none;width:22px;height:22px;margin-top:6px;color:var(--accent)}
-.search textarea{flex:1;border:0;outline:0;resize:none;background:transparent;color:var(--text);font:inherit;font-size:15px;line-height:1.7;min-height:56px;max-height:220px;padding:4px 0}
-.search .side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-.search button{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+.search .ico{flex:none;width:20px;height:20px;color:var(--muted)}
+.search textarea{flex:1;border:0;outline:0;resize:none;background:transparent;color:var(--text);font:inherit;font-size:15px;line-height:1.6;height:24px;min-height:24px;max-height:200px;padding:0;margin:4px 0}
+.search .side{flex:none;display:flex;flex-direction:row;align-items:center;gap:12px}
+.search button{background:var(--accent);color:#fff;border:0;border-radius:999px;padding:9px 16px;font:inherit;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
 .search button:disabled{opacity:.45;cursor:not-allowed}
 .search .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
 .search .cnt.over{color:var(--signal);font-weight:600}
@@ -112,8 +112,8 @@ footer a{color:var(--accent-ink)}
   <div class="top">
   <div class="search">
     <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-    <textarea id="text" rows="2" placeholder="개인정보가 섞인 문장을 붙여 넣으세요 — 예: 김철수 고객님 010-1234-5678 로 연락드렸습니다" aria-label="탐지할 문장"></textarea>
-    <div class="side"><button id="run" type="button">탐지 실행 <span style="opacity:.7">⌘↵</span></button><span class="cnt" id="cnt">0 / 2,000</span></div>
+    <textarea id="text" rows="1" placeholder="개인정보가 섞인 문장을 붙여 넣으세요 — 예: 김철수 고객님 010-1234-5678 로 연락드렸습니다" aria-label="탐지할 문장"></textarea>
+    <div class="side"><span class="cnt" id="cnt">0 / 2,000</span><button id="run" type="button">탐지 실행 <span style="opacity:.7">⌘↵</span></button></div>
   </div>
   <div class="chips" id="chips"><span class="lbl">예시 문장</span></div>
   </div>
@@ -201,7 +201,7 @@ function runAll(){
 
 // ---- 입력·칩
 function setCount(){ const n = $("text").value.length; const c = $("cnt"); c.textContent = `${n.toLocaleString()} / ${MAX.toLocaleString()}`; c.classList.toggle("over", n > MAX); $("run").disabled = n === 0 || n > MAX; }
-function autoGrow(){ const t = $("text"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 220) + "px"; }
+function autoGrow(){ const t = $("text"); t.style.height = "24px"; t.style.height = Math.min(Math.max(t.scrollHeight, 24), 200) + "px"; }
 function pick(s){
   document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c.dataset.id === (s && s.id)));
   if (s){ $("text").value = s.text; gold = s.gold; }
