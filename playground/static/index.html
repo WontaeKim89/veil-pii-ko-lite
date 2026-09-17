@@ -60,10 +60,13 @@ main{max-width:1080px;margin:0 auto;padding:28px 24px 64px}
 mark{padding:2px 5px;border-radius:5px;color:inherit;background:var(--g-miss);cursor:default}
 mark small{font-size:9.5px;font-weight:600;letter-spacing:.03em;margin-left:3px;opacity:.7;font-family:"IBM Plex Mono",monospace}
 mark.person{background:var(--g-person)} mark.contact{background:var(--g-contact)} mark.fin{background:var(--g-fin)} mark.id{background:var(--g-id)} mark.place{background:var(--g-place)} mark.org{background:var(--g-org)}
-mark.miss{background:var(--g-miss);text-decoration:underline dotted var(--signal);text-underline-offset:4px}
+mark.miss{background:transparent;border:1.5px dashed var(--muted);color:var(--muted)}
+mark.fp{background:transparent;border:1.5px dashed var(--signal)}
+mark.part{box-shadow:inset 0 -2px 0 0 transparent;border-bottom:2px dashed var(--signal);border-radius:5px 5px 2px 2px}
 mark.hl{outline:2px solid var(--ink);outline-offset:1px}
 .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:14px 2px 0;font-size:11.5px;color:var(--muted)}
 .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.legend .lg-miss::before{background:transparent;border:1.5px dashed var(--muted)} .legend .lg-fp::before{background:transparent;border:1.5px dashed var(--signal)} .legend .lg-part::before{background:var(--g-place);border-bottom:2px dashed var(--signal);border-radius:3px 3px 1px 1px}
 h2{font-size:15px;color:var(--ink);margin:36px 0 10px;font-weight:600}
 .wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
@@ -96,7 +99,7 @@ footer a{color:var(--accent-ink)}
   <div class="why" id="why" hidden></div>
   <div class="rows" id="rows"></div>
   <div class="legend">
-    <span style="--c:var(--g-person)">사람</span><span style="--c:var(--g-contact)">연락처·주소망</span><span style="--c:var(--g-fin)">금융</span><span style="--c:var(--g-id)">식별번호</span><span style="--c:var(--g-place)">날짜·주소</span><span style="--c:var(--g-org)">조직</span><span style="--c:var(--g-miss)">점선 = 정답인데 놓침 (예시 문장에서만)</span>
+    <span style="--c:var(--g-person)">사람</span><span style="--c:var(--g-contact)">연락처·주소망</span><span style="--c:var(--g-fin)">금융</span><span style="--c:var(--g-id)">식별번호</span><span style="--c:var(--g-place)">날짜·주소</span><span style="--c:var(--g-org)">조직</span><span class="lg-miss">회색 점선 = 못 잡음</span><span class="lg-fp">붉은 점선 = 오탐</span><span class="lg-part">밑줄 점선 = 경계 불일치</span><span style="margin-left:2px">(예시 문장에서만 판정)</span>
   </div>
   <h2>모델 정보 <span style="font-weight:400;color:var(--muted);font-size:12px">— 행을 누르면 지원 라벨과 주의점</span></h2>
   <div class="wrap"><table id="mtable"><thead><tr><th>모델</th><th>최초 공개</th><th>크기</th><th>라벨</th><th>라이선스</th><th>KDPII test F1</th><th>BCCard val(ko) F1</th><th>실행</th></tr></thead><tbody></tbody></table></div>
@@ -117,19 +120,22 @@ let MODELS = [], SCEN = [], HEALTH = {}, gold = null, seq = 0;
 
 // ---- 색칠: 예측 스팬 + (예시 문장이면) 어떤 예측과도 안 겹치는 정답을 점선으로
 function paint(text, spans, gold){
-  const marks = spans.map(s => ({...s, miss:false}));
+  // 정답이 있으면 스팬마다 판정: exact → 라벨색, 겹침만 → 라벨색+밑줄점선, 정답 없음 → 붉은 점선(오탐), 못 잡은 정답 → 회색 점선(미탐)
+  const marks = spans.map(p => {
+    if (!gold) return {...p, cls: grp(p.label)};
+    const exact = gold.some(g => g.start===p.start && g.end===p.end && g.label===p.label);
+    const ov = gold.some(g => g.start < p.end && p.start < g.end);
+    return {...p, cls: exact ? grp(p.label) : ov ? grp(p.label) + " part" : "fp", tip: exact ? "" : ov ? "경계·라벨 불일치" : "오탐"};
+  });
   if (gold) for (const g of gold){
-    const exact = spans.some(p => p.start===g.start && p.end===g.end && p.label===g.label);
-    const overlap = spans.some(p => p.start < g.end && g.start < p.end);
-    if (!exact && !overlap) marks.push({...g, miss:true});
+    if (!spans.some(p => p.start < g.end && g.start < p.end)) marks.push({...g, cls: "miss", tip: "못 잡음"});
   }
   marks.sort((a,b) => a.start-b.start);
   let out = "", i = 0;
   for (const m of marks){
     if (m.start < i) continue;                       // 서버가 비겹침 보장, 방어만
     out += esc(text.slice(i, m.start));
-    const cls = m.miss ? "miss" : grp(m.label);
-    out += `<mark class="${cls}" data-s="${m.start}" data-e="${m.end}" title="${m.miss ? "정답: " : ""}${m.label}${m.score!=null ? " · "+m.score : ""}">${esc(text.slice(m.start, m.end))}<small>${m.label}</small></mark>`;
+    out += `<mark class="${m.cls}" data-s="${m.start}" data-e="${m.end}" title="${m.tip ? m.tip + " · " : ""}${m.label}${m.score!=null ? " · "+m.score : ""}">${esc(text.slice(m.start, m.end))}<small>${m.label}</small></mark>`;
     i = m.end;
   }
   return out + esc(text.slice(i));
@@ -137,9 +143,12 @@ function paint(text, spans, gold){
 function tally(spans, gold){
   if (!gold) return `${spans.length} spans`;
   const hit = gold.filter(g => spans.some(p => p.start===g.start && p.end===g.end && p.label===g.label)).length;
-  const fp = spans.filter(p => !gold.some(g => g.start===p.start && g.end===p.end && g.label===p.label)).length;
+  const miss = gold.filter(g => !spans.some(p => p.start < g.end && g.start < p.end)).length;
+  const fp = spans.filter(p => !gold.some(g => g.start < p.end && p.start < g.end)).length;
+  const part = gold.length - hit - miss;
   const cls = (hit===gold.length && fp===0) ? "ok" : "bad";
-  return `<span class="${cls}">${hit} / ${gold.length} 정답 일치</span>${fp ? ` · 오탐 ${fp}` : ""}`;
+  const extra = [part ? `경계 ${part}` : "", miss ? `미탐 ${miss}` : "", fp ? `오탐 ${fp}` : ""].filter(Boolean).join(" · ");
+  return `<span class="${cls}">✔ ${hit} / ${gold.length}</span>${extra ? " · " + extra : ""}`;
 }
 
 // ---- 행 렌더
