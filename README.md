@@ -43,7 +43,6 @@
 | microsoft/mdeberta-v3-base | 276M | MIT | exact 0.39 → 오프셋 보정 후 회복 | | 탈락 — 크기 2.5배, SentencePiece 선행공백 오프셋 문제 |
 | klue/roberta-base | 110M | CC-BY-SA | 미실험 | | SA 조항으로 사전 제외 |
 
-이 단계에서 mDeBERTa 의 exact F1 0.39 대 partial F1 0.93 이라는 차이가 "디코더 경계 처리" 문제를 드러냈고, 스팬 양끝 공백 제거 보정을 모든 모델에 적용했다.
 
 ## 4. 학습 데이터
 
@@ -53,7 +52,6 @@
 | KDPII (CC-BY-4.0, IEEE Access 2024) | 40k 문장 · 3,664 대화 | 실제 구어체 기반 유일한 한국어 PII 실데이터, 공식 분할 | 33→16 라벨 매핑, 카드·계좌 스팬 숫자 구간 정규화, 대화 단위 장문 표본 별도 구성 |
 | 합성 (자체) | 26.5k 행 | 공개 데이터에 없는 라벨(차량번호·가입번호·단말 S/N)과 부족 도메인(금융·통신·보험) 보강, hard-negative 로 과탐 억제 | vLLM(gemma-4-12b-it)·Azure OpenAI 로 20 장르×7 문체 플레이스홀더 템플릿 ~4,700개 → 한국 포맷 정확 생성기(주민번호 2020-10 전후 분포, 카드 Luhn, 사업자번호 체크섬)로 채움. heldout 은 템플릿 해시 고정. 실명·실번호 무포함 |
 
-BCCard 데이터 감사 결과가 BCCard 모델이 스스로 약하다고 밝힌 ACCOUNT_NUMBER·ZIPCODE·PORT 의 원인("랜덤 문자열 = 식별자"로 학습)을 설명한다.
 
 ## 5. 학습 방식
 
@@ -72,7 +70,6 @@ BCCard 데이터 감사 결과가 BCCard 모델이 스스로 약하다고 밝힌
 | **weight-only INT8 + fp16 emb (공개본)** | **143MB** | **0.9342** | 61 / 237 ms | 108 ms |
 | weight-only INT4 + fp16 emb (실험) | 100MB | 0.9321 | 67 / 261 ms | 119 ms |
 
-측정 환경 Xeon 8480C, bs 1, 실제 문장 입력. 데모 VM(D8s_v5, 8 vCPU)에서 595자 상담 로그: Veil 140ms · BCCard 344ms · FrameByFrame 426ms · Azure 115ms.
 
 ---
 
