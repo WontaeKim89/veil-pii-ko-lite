@@ -17,7 +17,7 @@
 
 ---
 
-## 1. 개발 목표와 결과
+## 1. Goals & Results
 
 | 목표 | 정량 기준 | 결과 |
 |---|---|---|
@@ -27,11 +27,11 @@
 | 지연시간 | 4 vCPU · 512 토큰 ≤ 40ms | **미달** — INT8 237ms (128 토큰 61ms, 16 스레드 108ms) |
 
 
-## 2. 시스템 구성
+## 2. Pipeline
 
 <p align="center"><img src="assets/pipeline.svg" alt="데이터 → 학습 → 디코딩 → 산출물 파이프라인" width="100%"></p>
 
-## 3. 백본 선택
+## 3. Backbone Selection
 
 후보 모델을 동일 데이터(clean 셋)·동일 하이퍼파라미터·2 epoch 조건으로 학습해 비교했다.
 
@@ -45,7 +45,7 @@
 | klue/roberta-base | 110M | CC-BY-SA | 미실험 | | SA 조항으로 사전 제외 |
 
 
-## 4. 학습 데이터
+## 4. Training Data
 
 | 출처 | 규모 | 수집 사유 | 처리 |
 |---|---:|---|---|
@@ -54,7 +54,7 @@
 | 합성 (자체) | 26.5k 행 | 공개 데이터에 없는 라벨(차량번호·가입번호·단말 S/N)과 부족 도메인(금융·통신·보험) 보강, hard-negative 로 과탐 억제 | vLLM(gemma-4-12b-it)·Azure OpenAI 로 20 장르×7 문체 플레이스홀더 템플릿 ~4,700개 → 한국 포맷 정확 생성기(주민번호 2020-10 전후 분포, 카드 Luhn, 사업자번호 체크섬)로 채움. heldout 은 템플릿 해시 고정. 실명·실번호 무포함 |
 
 
-## 5. 학습 방식
+## 5. Training
 
 - 토큰 분류(BIOES), 32 라벨 × 4 + O = 129 클래스. 불가능한 전이를 차단하는 제약 Viterbi 디코딩.
 - 최대 512 토큰 슬라이딩 창, stride 128, 창 경계 스팬은 후처리에서 병합.
@@ -62,7 +62,7 @@
 - 평가: 문자 오프셋 exact-match span F1(micro) 기본, partial F1 병기. 베이스라인은 "그 모델이 아는 라벨 한정" F1 도 별도 계산.
 - 양자화: ONNX Runtime `MatMulNBits` weight-only INT8(block 128) + 임베딩 fp16.
 
-## 6. 양자화 · 지연시간
+## 6. Quantization & Latency
 
 | 변형 | 크기 | KDPII F1 | 4스레드 128 / 512 tok | 16스레드 512 tok |
 |---|---:|---:|---:|---:|
@@ -74,7 +74,7 @@
 
 ---
 
-## 컨테이너로 실행
+## Docker
 
 가중치가 이미지에 포함되어 있어 별도 설치나 네트워크 없이 기동한다.
 
@@ -87,7 +87,7 @@ curl -s localhost:8080/detect -H 'Content-Type: application/json' \
 #  "ms":14, "summary":{"total":3,"by_label":{...},"sensitive":1}}
 ```
 
-### 이미지 태그
+### Tags
 
 | 태그 | 크기(압축) | 내용 |
 |---|---:|---|
@@ -103,7 +103,7 @@ docker run -d -p 8080:8080 zzang9680/veil-pii:presidio
 curl -s localhost:8080/healthz    # {"presidio": true, ...} 이면 Presidio 이미지
 ```
 
-### 엔드포인트
+### Endpoints
 
 | 메서드 | 경로 | 설명 |
 |---|---|---|
@@ -112,7 +112,7 @@ curl -s localhost:8080/healthz    # {"presidio": true, ...} 이면 Presidio 이�
 | POST | `/batch` | 여러 건 한 번에 |
 | GET | `/healthz` `/labels` `/docs` | 상태 · 라벨 32종 · OpenAPI |
 
-### 마스킹 정책
+### Masking Policies
 
 ```bash
 curl -s localhost:8080/mask -H 'Content-Type: application/json' \
@@ -131,7 +131,7 @@ curl -s localhost:8080/mask -H 'Content-Type: application/json' \
 입력 원문은 로그에 기록하지 않는다. 컨테이너는 비루트(uid 10001)로 실행되며 `--read-only --tmpfs /tmp` 환경에서도 기동한다.
 폐쇄망 반입 절차는 [`docker/OFFLINE.md`](docker/OFFLINE.md) 에 정리했다.
 
-### Presidio 어댑터
+### Presidio Adapter
 
 ```bash
 docker run -d -p 8080:8080 -e VEIL_HASH_SALT=my-secret --name veil zzang9680/veil-pii:presidio
@@ -208,7 +208,7 @@ print('  암호화:',e.text[:60]+'...'); print('  복원  :',d.text); print('  �
 
 확인이 끝나면 `docker rm -f veil` 로 컨테이너를 제거한다.
 
-## Python 패키지
+## Python Package
 
 가중치는 두 경로로 배포한다. 어느 쪽을 받든 `release/` 의 `config.json`·토크나이저·`veil.py` 와 함께 사용한다.
 
@@ -233,7 +233,7 @@ det.mask("담당자 김철수(010-1234-5678)에게 문의")   # '담당자 [PERS
 
 가중치를 저장소에 직접 두지 않은 이유는 용량 제약이다. GitHub 는 파일당 100MB 를 넘으면 push 를 거부하고 LFS 는 대역폭 과금이 붙는다. Releases 자산은 파일당 2GB 까지 무료다.
 
-## 저장소 구조
+## Repository Layout
 
 | 경로 | 내용 |
 |---|---|
@@ -245,14 +245,14 @@ det.mask("담당자 김철수(010-1234-5678)에게 문의")   # '담당자 [PERS
 | `playground/` | 4개 모델 동시 비교 데모 (FastAPI + docker compose + Caddy, Azure VM 배포 스크립트) |
 | `scripts/` | VM 학습·평가·패키징·HF 업로드 |
 
-## 재현
+## Reproduce
 
 ```bash
 pip install -r scripts/requirements-repro.txt
 bash scripts/reproduce_claims.sh release   # 공개 데이터 수집 → Veil INT8/fp32 · BCCard 베이스라인 평가 → 결과표 (CPU 8스레드 약 40분)
 ```
 
-## 라이선스 및 출처
+## License & Credits
 
 Apache 2.0. 학습 데이터 BCCard/privacy-filter-openpii-masking (CC-BY-4.0) · KDPII (CC-BY-4.0, Fei·Kang et al., IEEE Access 2024) · 자체 합성.
 백본 monologg/koelectra-base-v3-discriminator (Apache 2.0). 비교 대상 BCCard/MoAI-Privacy-Filter-INT8, FrameByFrame/privacy-filter-korean (Apache 2.0), Azure AI Language PII (API 2024-11-01).
