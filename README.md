@@ -131,6 +131,83 @@ curl -s localhost:8080/mask -H 'Content-Type: application/json' \
 입력 문장은 로그에 남지 않는다. 컨테이너는 비루트(uid 10001)로 돌고 `--read-only --tmpfs /tmp` 로도 뜬다.
 폐쇄망 반입 절차는 [`docker/OFFLINE.md`](docker/OFFLINE.md) 참고.
 
+### presidio 판 써 보기
+
+```bash
+docker run -d -p 8080:8080 -e VEIL_HASH_SALT=my-secret --name veil zzang9680/veil-pii:presidio
+curl -s localhost:8080/healthz      # {"presidio": true, ...}
+```
+
+REST 응답은 `slim` 과 완전히 같다. 같은 문장을 넣으면 스팬은 물론 `hash` 정책의 토큰 값까지 일치한다.
+그러니 HTTP 로만 쓸 거면 `slim` 으로 충분하고, 아래 세 가지가 필요할 때만 `presidio` 를 고른다.
+
+**1) Presidio 표준 엔티티명으로 받기** — 기존 Presidio 파이프라인에 그대로 꽂을 수 있다.
+
+```bash
+docker exec veil python -c "from veil_pii.presidio import build_analyzer; t='담당자 김철수(010-1234-5678)에게 문의. 주민번호 900101-1234567'; [print(' ', r.entity_type, t[r.start:r.end], round(r.score,4)) for r in build_analyzer().analyze(text=t, language='ko')]"
+```
+```
+PERSON 김철수 0.9999
+KR_RRN 900101-1234567 0.9999
+PHONE_NUMBER 010-1234-5678 0.9998
+```
+
+`PERSON` → `PERSON`, `PHONE` → `PHONE_NUMBER`, `RRN` → `KR_RRN`, `CARD_NUMBER` → `CREDIT_CARD` 로 바뀐다.
+
+**2) Anonymizer 연산자**
+
+```bash
+docker exec veil python -c "
+from veil_pii.presidio import build_analyzer,build_anonymizer,get_operators
+t='담당자 김철수(010-1234-5678)에게 문의. 주민번호 900101-1234567'
+r=build_analyzer().analyze(text=t,language='ko'); a=build_anonymizer()
+[print(' ',p,'→',a.anonymize(text=t,analyzer_results=r,operators=get_operators(p)).text) for p in ('default','partial')]"
+```
+```
+default → 담당자 <PERSON>(<PHONE_NUMBER>)에게 문의. 주민번호 <KR_RRN>
+partial → 담당자 김*수(010-****-5678)에게 문의. 주민번호 900101-*******
+```
+
+`default`·`hash` 의 표기는 REST 와 다르다(꺾쇠, 전체 SHA-256). `partial` 만 REST 와 같은 자릿수 규칙을 쓰도록 맞춰 뒀다 — 두 경로의 부분가림이 갈리면 감사 대조가 깨지기 때문이다.
+
+**3) 암호화 → 복원.** `hash` 는 되돌릴 수 없지만 이건 키로 복원된다.
+
+```bash
+docker exec veil python -c "
+from veil_pii.presidio import build_analyzer,build_anonymizer
+from presidio_anonymizer import DeanonymizeEngine
+from presidio_anonymizer.entities import OperatorConfig
+K='0123456789abcdef0123456789abcdef'
+t='담당자 김철수(010-1234-5678)에게 문의'
+r=build_analyzer().analyze(text=t,language='ko')
+e=build_anonymizer().anonymize(text=t,analyzer_results=r,operators={'DEFAULT':OperatorConfig('encrypt',{'key':K})})
+d=DeanonymizeEngine().deanonymize(text=e.text,entities=e.items,operators={'DEFAULT':OperatorConfig('decrypt',{'key':K})})
+print('  암호화:',e.text[:60]+'...'); print('  복원  :',d.text); print('  일치  :',d.text==t)"
+```
+```
+암호화: 담당자 WHnGFEeh6SPjpDAMopkC8HmMpQpq4-lh2SaQtety-5w=(x1x5LIYXwth...
+복원  : 담당자 김철수(010-1234-5678)에게 문의
+일치  : True
+```
+
+두 판의 실측 차이(Apple Silicon, 74자 문장 20회):
+
+| | slim | presidio |
+|---|---:|---:|
+| 기동 | 407 ms | 269 ms |
+| 탐지(중앙값) | 13 ms | 13 ms |
+| 메모리 | 304 MB | 360 MB |
+| 이미지(압축) | 235 MB | 300 MB |
+
+탐지 속도는 같고 메모리만 56MB 더 쓴다.
+
+> zsh 에서 `<<'PY'` 같은 heredoc 을 여러 줄로 붙여 넣으면 `zsh: bad pattern: [200~docker` 가 날 수 있다.
+> 터미널의 bracketed paste 제어문자가 글자로 들어가서 그렇다. 위 예시는 `python -c "..."` 한 덩어리라 이 문제를 타지 않는다.
+> heredoc 을 꼭 쓰려면 `docker exec -i veil python < script.py` 처럼 파일로 넘기거나(`-i` 없으면 출력이 비어 버린다),
+> 붙여 넣기 전에 `printf '\e[?2004l'` 로 제어문자를 끈다.
+
+끝나면 `docker rm -f veil` 로 정리한다.
+
 ## 파이썬 패키지로 쓰기
 
 가중치는 두 곳에 있다. 어느 쪽이든 `release/` 에 있는 `config.json`·토크나이저·`veil.py` 와 같이 쓴다.

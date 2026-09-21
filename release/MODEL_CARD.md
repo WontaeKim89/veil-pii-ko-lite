@@ -161,6 +161,48 @@ curl -s localhost:8080/mask -H 'Content-Type: application/json' \
 엔드포인트는 `/detect` `/mask` `/batch` `/healthz` `/labels` `/docs`, 환경변수는 `VEIL_THREADS` `VEIL_HASH_SALT` `VEIL_MAX_CHARS` 를 쓴다.
 태그 목록: https://hub.docker.com/r/zzang9680/veil-pii/tags
 
+#### presidio 판에서만 되는 것
+
+REST 응답은 두 판이 같다 — 스팬도, `hash` 토큰 값도 일치한다. 아래 세 가지가 필요할 때만 `presidio` 를 고른다.
+
+```bash
+docker run -d -p 8080:8080 -e VEIL_HASH_SALT=my-secret --name veil zzang9680/veil-pii:presidio
+
+# 1) Presidio 표준 엔티티명 — 기존 Presidio 파이프라인에 그대로 연결된다
+docker exec veil python -c "from veil_pii.presidio import build_analyzer; t='담당자 김철수(010-1234-5678)에게 문의. 주민번호 900101-1234567'; [print(' ', r.entity_type, t[r.start:r.end], round(r.score,4)) for r in build_analyzer().analyze(text=t, language='ko')]"
+#   PERSON 김철수 0.9999 / KR_RRN 900101-1234567 0.9999 / PHONE_NUMBER 010-1234-5678 0.9998
+
+# 2) Anonymizer 연산자
+docker exec veil python -c "
+from veil_pii.presidio import build_analyzer,build_anonymizer,get_operators
+t='담당자 김철수(010-1234-5678)에게 문의. 주민번호 900101-1234567'
+r=build_analyzer().analyze(text=t,language='ko'); a=build_anonymizer()
+[print(' ',p,'→',a.anonymize(text=t,analyzer_results=r,operators=get_operators(p)).text) for p in ('default','partial')]"
+#   default → 담당자 <PERSON>(<PHONE_NUMBER>)에게 문의. 주민번호 <KR_RRN>
+#   partial → 담당자 김*수(010-****-5678)에게 문의. 주민번호 900101-*******
+
+# 3) 암호화 → 복원 (hash 와 달리 되돌릴 수 있다)
+docker exec veil python -c "
+from veil_pii.presidio import build_analyzer,build_anonymizer
+from presidio_anonymizer import DeanonymizeEngine
+from presidio_anonymizer.entities import OperatorConfig
+K='0123456789abcdef0123456789abcdef'
+t='담당자 김철수(010-1234-5678)에게 문의'
+r=build_analyzer().analyze(text=t,language='ko')
+e=build_anonymizer().anonymize(text=t,analyzer_results=r,operators={'DEFAULT':OperatorConfig('encrypt',{'key':K})})
+d=DeanonymizeEngine().deanonymize(text=e.text,entities=e.items,operators={'DEFAULT':OperatorConfig('decrypt',{'key':K})})
+print('복원:',d.text,'| 일치:',d.text==t)"
+#   복원: 담당자 김철수(010-1234-5678)에게 문의 | 일치: True
+```
+
+`partial` 은 두 경로의 자릿수 규칙을 같게 맞춰 뒀다. `default`·`hash` 표기는 Presidio 쪽이 다르다(꺾쇠, 전체 SHA-256).
+
+실측 차이(Apple Silicon, 74자 20회): 기동 407→269ms, 탐지 13ms 동일, 메모리 304→360MB, 이미지 235→300MB.
+
+zsh 에서 여러 줄 heredoc 을 붙여 넣으면 `zsh: bad pattern: [200~docker` 가 날 수 있다(bracketed paste 제어문자).
+위 예시는 `python -c "..."` 한 덩어리라 해당하지 않는다. heredoc 을 쓰려면 `docker exec -i veil python < script.py` 로 넘긴다(`-i` 필수).
+
+
 ## 라벨 (32)
 
 | 그룹 | 라벨 |
