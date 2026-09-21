@@ -7,6 +7,8 @@
 | 벤치 | n | Veil-PII-Ko-Lite v4 fp32 | Veil-PII-Ko-Lite v4 INT8 | BCCard MoAI-PF-INT8 | Δ (fp32 − BCCard) |
 |---|---:|---:|---:|---:|---:|
 | KDPII test (공식 test 분할) | 4,891 | **0.9339** | 0.9342 | 0.4533 (29라벨 한정 0.4636) | **+48.1pt** |
+| KDPII test · 대화 단위(458) — INT8 0.9433 / BCCard 0.4661 / Azure 0.4626 | 458 | **0.9423** | 0.9433 | 0.4661 | **+47.6pt** |
+| BCCard validation · en(3,781) — INT8 0.9632 / BCCard 0.9653 / Azure 0.5295 | 3,781 | **0.9700** | 0.9632 | 0.9653 | **+0.5pt** (INT8 은 −0.2pt) |
 | KDPII test — Azure AI Language PII(API 2024-11-01, ko) 와 비교 | 4,891 | **0.9339** | 0.9342 | Azure 0.4631 (매핑 가능 라벨 한정 0.4741) | **+47.1pt** |
 | BCCard validation · ko — Azure 와 비교 | 10,743 | **0.9826** | 0.9824 | Azure 0.4031 (매핑 라벨 한정 0.4372) | **+58.0pt** |
 | 합성 heldout v2 — Azure 와 비교 | 670 | **0.9652** | — | Azure 0.5035 | **+46.2pt** |
@@ -27,7 +29,7 @@ BCCard 모델 카드의 자체 보고치 0.9824(validation) 는 측정 방식이
 | 산출물 | 크기 | KDPII test F1 | BCCard val ko F1 |
 |---|---:|---:|---:|
 | fp32 safetensors (`release/fp32/`) | 450MB | 0.9339 | 0.9826 |
-| **ONNX weight-only INT8 + fp16 임베딩** (`release/model.int8.onnx`) | **143MB** | **0.9342** | **0.9824** |
+| **ONNX weight-only INT8 + fp16 임베딩** (`release/model.int8.onnx`) | **143MB** | **0.9342** (대화 0.9433 · 합성 0.9643 · en 0.9632) | **0.9824** |
 | (참고) weight-only INT4 — 실험값, 공개본 제외 | 100MB | 0.9321 | 0.9819 |
 
 방법: `onnxruntime.quantization.matmul_nbits_quantizer` (block 128, symmetric, accuracy_level 4) + `export/emb_fp16.py`. 동적 INT8(`quantize_dynamic`)은 −4~7pt 손실이라 채택하지 않음(`runs/final_v4_full/hybrid/hybrid.json`).

@@ -90,13 +90,13 @@ model-index:
 | 벤치 | n | Veil fp32 | Veil INT8 | BCCard 1.4B | FrameByFrame 1.4B | Azure AI Language |
 |---|---:|---:|---:|---:|---:|---:|
 | KDPII test — 실제 대화체 | 4,891 | 0.9339 | 0.9342 | 0.4533 | 0.5156 | 0.4631 |
-| KDPII test — 대화 단위 | 458 | 0.9423 | — | — | — | — |
+| KDPII test — 대화 단위 | 458 | 0.9423 | 0.9433 | 0.4661 | — | 0.4626 |
 | KDPII test — FrameByFrame 9라벨 한정 | 4,891 | 0.9383 | — | — | 0.6824 | — |
 | BCCard validation · ko | 10,743 | 0.9826 | 0.9824 | 0.9594¹ | — | 0.4031 |
-| BCCard validation · en | 3,781 | 0.9700 | — | — | — | — |
-| 합성 heldout v2 — 32 라벨 | 670 | 0.9652 | — | 0.5328 | — | 0.5035 |
+| BCCard validation · en | 3,781 | 0.9700 | 0.9632 | 0.9653 | — | 0.5295 |
+| 합성 heldout v2 — 32 라벨 | 670 | 0.9652 | 0.9643 | 0.5328 | — | 0.5035 |
 
-¹ BCCard 모델 카드의 자체 보고치 0.9824 는 측정 방식 미공개. 표의 값은 이 리포 스코어러로 동일 조건에서 측정. 베이스라인을 자기 라벨 한정 F1(BCCard 29라벨 0.4636, Azure 매핑 라벨 0.4741)로 좁혀도 격차 유지. per-entity 수치는 `eval_*.json`, 측정 조건은 `EVIDENCE.md`.
+¹ BCCard 모델 카드의 자체 보고치 0.9824 는 측정 방식 미공개. 표의 값은 이 리포 스코어러로 동일 조건에서 측정. 베이스라인을 자기 라벨 한정 F1(BCCard 29라벨 0.4636, Azure 매핑 라벨 0.4741)로 좁혀도 격차 유지. FrameByFrame 은 9 라벨만 지원해 KDPII 외 벤치는 측정하지 않음. 영어(BCCard val · en)에서는 INT8 이 BCCard 1.4B 에 0.2pt 뒤진다. per-entity 수치는 `eval_*.json`, 측정 조건은 `EVIDENCE.md`.
 
 ## 사용법
 
