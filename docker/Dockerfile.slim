@@ -24,15 +24,20 @@ ENV PYTHONUNBUFFERED=1 \
 # 1) 의존성 — 코드보다 먼저 깔아 레이어 캐시를 살린다
 COPY --from=build /w/dist/*.whl /tmp/
 RUN pip install --no-cache-dir /tmp/*.whl "fastapi>=0.115" "uvicorn[standard]>=0.30" && \
+    python -m pip uninstall -y pip setuptools wheel 2>/dev/null || true && \
+    find /usr/local/lib/python3.12 -name "__pycache__" -type d -prune -exec rm -rf {} + && \
+    find /usr/local/lib/python3.12 -name "*.pyc" -delete && \
     rm -rf /tmp/*.whl /root/.cache
 
 # 2) 모델 — 가장 큰 레이어라 마지막에 둔다(코드만 바뀌면 재전송 없음)
-COPY release/model.int8.onnx /opt/veil/model/
-COPY release/tokenizer.json release/config.json release/vocab.txt \
-     release/tokenizer_config.json release/special_tokens_map.json /opt/veil/model/
-COPY release/labels.yaml /opt/veil/model/
+RUN useradd -r -u 10001 -m -d /home/veil veil
 
-RUN useradd -r -u 10001 -m -d /home/veil veil && chown -R veil:veil /opt/veil
+# 소유권을 COPY 단계에서 지정한다 — chown -R 을 따로 돌리면 모델 143MB 가 레이어에 중복 적재된다
+COPY --chown=10001:10001 release/model.int8.onnx /opt/veil/model/
+COPY --chown=10001:10001 release/tokenizer.json release/config.json release/vocab.txt \
+     release/tokenizer_config.json release/special_tokens_map.json /opt/veil/model/
+COPY --chown=10001:10001 release/labels.yaml /opt/veil/model/
+
 USER veil
 WORKDIR /home/veil
 
