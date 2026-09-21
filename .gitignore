@@ -17,3 +17,5 @@ release/repro_*.json
 tests/
 docs/
 *.png
+dist/
+*.whl

@@ -1,0 +1,42 @@
+# Veil-PII-Ko-Lite · presidio — slim + Presidio 어댑터/익명화 연산자.
+# spaCy NLP 엔진은 쓰지 않는다(문맥 항목은 모델이 담당). 탐지 결과는 slim 과 동일하다.
+# 빌드: docker build -f docker/Dockerfile.presidio -t zzang9680/veil-pii:presidio .
+FROM python:3.12-slim AS build
+WORKDIR /w
+RUN pip install --no-cache-dir --upgrade pip build hatchling
+COPY pyproject.toml README.md ./
+COPY veil_pii ./veil_pii
+RUN python -m build --wheel --outdir /w/dist
+
+FROM python:3.12-slim
+LABEL org.opencontainers.image.title="Veil-PII-Ko-Lite (presidio)" \
+      org.opencontainers.image.description="Korean PII detection with Microsoft Presidio adapter and anonymizer operators" \
+      org.opencontainers.image.source="https://github.com/WontaeKim89/veil-pii-ko-lite" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.version="1.0.0"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    VEIL_MODEL_DIR=/opt/veil/model \
+    VEIL_OFFLINE=1 \
+    VEIL_THREADS=4 \
+    OMP_NUM_THREADS=4
+
+COPY --from=build /w/dist/*.whl /tmp/
+RUN pip install --no-cache-dir /tmp/*.whl "fastapi>=0.115" "uvicorn[standard]>=0.30" \
+        "presidio-analyzer>=2.2" "presidio-anonymizer>=2.2" && \
+    rm -rf /tmp/*.whl /root/.cache
+
+COPY release/model.int8.onnx /opt/veil/model/
+COPY release/tokenizer.json release/config.json release/vocab.txt \
+     release/tokenizer_config.json release/special_tokens_map.json /opt/veil/model/
+COPY release/labels.yaml /opt/veil/model/
+
+RUN useradd -r -u 10001 -m -d /home/veil veil && chown -R veil:veil /opt/veil
+USER veil
+WORKDIR /home/veil
+
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s --start-period=25s --retries=3 \
+  CMD python -c "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz',timeout=2).status==200 else 1)"
+CMD ["uvicorn", "veil_pii.server:app", "--host", "0.0.0.0", "--port", "8080", "--no-access-log"]

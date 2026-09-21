@@ -1,0 +1,42 @@
+# Veil-PII-Ko-Lite · slim — 탐지 + 3종 익명화. Presidio 없음.
+# 빌드: docker build -f docker/Dockerfile.slim -t zzang9680/veil-pii:slim .
+FROM python:3.12-slim AS build
+WORKDIR /w
+RUN pip install --no-cache-dir --upgrade pip build hatchling
+COPY pyproject.toml README.md ./
+COPY veil_pii ./veil_pii
+RUN python -m build --wheel --outdir /w/dist
+
+FROM python:3.12-slim
+LABEL org.opencontainers.image.title="Veil-PII-Ko-Lite (slim)" \
+      org.opencontainers.image.description="Korean PII detection — 110M KoELECTRA, 32 labels, INT8 ONNX, CPU only" \
+      org.opencontainers.image.source="https://github.com/WontaeKim89/veil-pii-ko-lite" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.version="1.0.0"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    VEIL_MODEL_DIR=/opt/veil/model \
+    VEIL_OFFLINE=1 \
+    VEIL_THREADS=4 \
+    OMP_NUM_THREADS=4
+
+# 1) 의존성 — 코드보다 먼저 깔아 레이어 캐시를 살린다
+COPY --from=build /w/dist/*.whl /tmp/
+RUN pip install --no-cache-dir /tmp/*.whl "fastapi>=0.115" "uvicorn[standard]>=0.30" && \
+    rm -rf /tmp/*.whl /root/.cache
+
+# 2) 모델 — 가장 큰 레이어라 마지막에 둔다(코드만 바뀌면 재전송 없음)
+COPY release/model.int8.onnx /opt/veil/model/
+COPY release/tokenizer.json release/config.json release/vocab.txt \
+     release/tokenizer_config.json release/special_tokens_map.json /opt/veil/model/
+COPY release/labels.yaml /opt/veil/model/
+
+RUN useradd -r -u 10001 -m -d /home/veil veil && chown -R veil:veil /opt/veil
+USER veil
+WORKDIR /home/veil
+
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
+  CMD python -c "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz',timeout=2).status==200 else 1)"
+CMD ["uvicorn", "veil_pii.server:app", "--host", "0.0.0.0", "--port", "8080", "--no-access-log"]

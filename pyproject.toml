@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "veil-pii"
+version = "1.0.0"
+description = "Korean PII detection — 110M KoELECTRA, 32 labels, INT8 ONNX, CPU only"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Wontae Kim" }]
+keywords = ["pii", "ner", "korean", "privacy", "onnx", "presidio"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Natural Language :: Korean",
+  "Programming Language :: Python :: 3",
+  "Topic :: Security",
+  "Topic :: Text Processing :: Linguistic",
+]
+
+# 코어는 토크나이저에 transformers 를 쓰지 않는다 — 의존성 135MB 절감
+dependencies = [
+  "onnxruntime>=1.28",
+  "tokenizers>=0.20",
+  "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+presidio = ["presidio-analyzer>=2.2", "presidio-anonymizer>=2.2"]
+server   = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
+hub      = ["huggingface_hub>=0.25"]
+all      = ["veil-pii[presidio,server,hub]"]
+
+[project.urls]
+Homepage = "https://github.com/WontaeKim89/veil-pii-ko-lite"
+Model = "https://huggingface.co/1T/veil-pii-ko-lite"
+
+[project.scripts]
+veil-pii = "veil_pii.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["veil_pii"]
+
+[tool.hatch.build.targets.sdist]
+include = ["veil_pii", "README.md"]
