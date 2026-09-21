@@ -14,8 +14,8 @@ bash docker/build.sh --save --sbom                # 빌드 → 스모크 테스�
 
 | 파일 | 내용 |
 |---|---|
-| `veil-pii-slim-1.0.0.tar.gz` | 이미지 (탐지 + 익명화) |
-| `veil-pii-presidio-1.0.0.tar.gz` | 이미지 (+ Presidio 어댑터) |
+| `veil-pii-slim-1.0.0.tar.gz` | 이미지 (탐지 + 익명화) — 약 232 MB |
+| `veil-pii-presidio-1.0.0.tar.gz` | 이미지 (+ Presidio 어댑터) — 약 287 MB |
 | `sbom-slim-1.0.0.spdx.json` | 구성요소 목록 (SPDX) |
 | `sbom-presidio-1.0.0.spdx.json` | 구성요소 목록 (SPDX) |
 | `SHA256SUMS-1.0.0.txt` | 무결성 체크섬 |
@@ -100,6 +100,7 @@ docker logs veil | grep -c "김철수"                               # 0 이어�
 |---|---|
 | `VEIL_HASH_SALT` | 시크릿으로 주입하고 **바꾸지 않는다**. 바꾸면 과거 해시 토큰과 대조가 끊긴다 |
 | 자원 | 메모리 2GB, CPU 4코어면 충분하다. 스레드는 `VEIL_THREADS` 로 맞춘다 |
+| 디스크 | 이미지 전개 후 slim 717MB · presidio 998MB |
 | 스케일 | 상태가 없으므로 수평 확장이 자유롭다. 장문 처리량이 필요하면 복제 수를 늘리는 편이 스레드를 늘리는 것보다 선형적이다 |
 | 업그레이드 | 이미지 태그를 `1.0.0` 처럼 고정해 쓴다. `slim` 같은 이동 태그는 검증 환경에서만 |
 | 모델 교체 | 가중치만 바꾸려면 `-v /path/model:/opt/veil/model:ro` 로 볼륨 마운트한다 |

@@ -9,10 +9,13 @@
 
 ## 태그 두 가지
 
-| 태그 | 들어 있는 것 | 언제 쓰나 |
-|---|---|---|
-| `slim` | 탐지 + 익명화 3종(default / hash / partial) | **기본값.** 대부분 이걸로 충분하다 |
-| `presidio` | `slim` + Microsoft Presidio 어댑터 · Anonymizer 연산자 | 이미 Presidio 를 쓰거나, 암복호화·세밀한 연산자 정책이 필요할 때 |
+| 태그 | 들어 있는 것 | 내려받는 크기 | 디스크 |
+|---|---|---:|---:|
+| `slim` | 탐지 + 익명화 3종(default / hash / partial) | **232 MB** | 717 MB |
+| `presidio` | `slim` + Microsoft Presidio 어댑터 · Anonymizer 연산자 | **287 MB** | 998 MB |
+
+`slim` 이 기본값이다. `presidio` 는 이미 Presidio 를 쓰고 있거나 암복호화·세밀한 연산자 정책이 필요할 때 고른다.
+"내려받는 크기" 는 압축 전송량이고, "디스크" 는 풀어 놓은 뒤 차지하는 용량이다(`docker images` 표시값).
 
 두 이미지의 **탐지 결과는 완전히 같다**. Presidio 는 탐지에 관여하지 않고 형식 변환과 익명화 연산자만 더한다
 (실측에서 Presidio 룰을 탐지에 섞으면 정확도가 오르지 않거나 떨어졌다. 근거는 GitHub 저장소의 검토 문서 참조).
@@ -93,6 +96,7 @@ curl -s localhost:8080/mask -H 'Content-Type: application/json' \
 | BCCard validation (ko, 10,743행) | **0.983** |
 | 지연 (4 vCPU) | 128토큰 61ms · 512토큰 237ms |
 | 모델 크기 | INT8 ONNX 143MB |
+| 이미지 | slim 232MB(전송) / 717MB(디스크) · presidio 287MB / 998MB |
 
 같은 스코어러로 잰 비교 대상: BCCard MoAI-Privacy-Filter(1.4B) 0.453 · FrameByFrame(1.4B) 0.516 · Azure AI Language PII 0.463.
 
