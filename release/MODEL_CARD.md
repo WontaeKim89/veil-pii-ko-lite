@@ -65,37 +65,37 @@ model-index:
 ---
 
 <div align="center">
+
 <img src="assets/banner.svg" alt="Veil-PII-Ko-Lite" width="100%"/>
-</div>
+
+CPU환경에서 빠르게 구동이 가능한 한국어 개인정보 탐지용 토큰 분류 모델입니다.
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-2ea44f?style=flat-square)](#라이선스--고지)
 [![ONNX](https://img.shields.io/badge/ONNX%20INT8-143%20MB-167e6c?style=flat-square)](#파일)
 [![GitHub](https://img.shields.io/badge/GitHub-WontaeKim89%2Fveil--pii--ko--lite-181717?style=flat-square&logo=github)](https://github.com/WontaeKim89/veil-pii-ko-lite)
 [![Docker](https://img.shields.io/badge/Docker-zzang9680%2Fveil--pii-2496ed?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/zzang9680/veil-pii)
 
-한국어 개인정보 탐지용 토큰 분류 모델. KoELECTRA-base-v3(110M) 파인튜닝, 32 라벨, INT8 ONNX 로 CPU 추론.
+</div>
+
+---
 
 ## 개요
+On-Premise 형태로 구축이 필요한 환경에서 가벼우면서도 높은 PII 탐지 성능을 목표로 만들어진 모델입니다.
+KoELECTRA-base-v3 (110M) 를 통해 32개의 PII Category에 대한 분류가 가능하도록 Fine-Tunining했고, INT8 ONNX 로 CPU 환경에서 빠른 구동이 가능하도록 최적화 하였습니다.
 
-- 용도: 사내 LLM 에이전트 앞단의 개인정보 마스킹. 폐쇄망 CPU 환경.
-- 대상: 주민번호·사업자번호·CI 등 한국 식별자와 이름·주소 등 문맥 항목. 한 모델로 처리.
-- 기존 공개 모델(BCCard MoAI-Privacy-Filter, FrameByFrame, Azure AI Language PII, Presidio)은 크기·라벨 범위·한국어 실문장 성능 중 하나가 부족. 직접 학습.
-- 라벨 32종. BCCard 29종에 차량번호·가입번호·단말 S/N 추가.
-- 디코더 `veil.py` 포함. 제약 BIOES Viterbi, 슬라이딩 창 병합, 조사 제거. 출력은 `[{start, end, label, score}]`. 의존성은 `onnxruntime` 뿐, torch 불필요.
-- 베이스라인은 전부 같은 스코어러·디코더로 재측정. 재현 절차는 아래.
 
 ## 벤치마크
 
-지표: 문자 오프셋 exact-match span F1(micro). 모든 모델 동일 스코어러·디코더.
+문자 오프셋 exact-match span F1 (micro). 모든 모델을 **같은 스코어러·같은 디코더**로 측정하였습니다.
 
-| 벤치 | n | Veil fp32 | Veil INT8 | BCCard 1.4B | FrameByFrame 1.4B | Azure AI Language |
+| 벤치 | n | **Veil fp32** | Veil INT8 | BCCard 1.4B | FrameByFrame 1.4B | Azure AI Language |
 |---|---:|---:|---:|---:|---:|---:|
-| KDPII test — 실제 대화체 | 4,891 | 0.9339 | 0.9342 | 0.4533 | 0.5156 | 0.4631 |
-| KDPII test — 대화 단위 | 458 | 0.9423 | 0.9433 | 0.4661 | — | 0.4626 |
-| KDPII test — FrameByFrame 9라벨 한정 | 4,891 | 0.9383 | — | — | 0.6824 | — |
-| BCCard validation · ko | 10,743 | 0.9826 | 0.9824 | 0.9594¹ | — | 0.4031 |
-| BCCard validation · en | 3,781 | 0.9700 | 0.9632 | 0.9653 | — | 0.5295 |
-| 합성 heldout v2 — 32 라벨 | 670 | 0.9652 | 0.9643 | 0.5328 | — | 0.5035 |
+| KDPII test — 실제 대화체 | 4,891 | **0.9339** | 0.9342 | 0.4533 | 0.5156 | 0.4631 |
+| KDPII test — 대화 단위 | 458 | **0.9423** | 0.9433 | 0.4661 | — | 0.4626 |
+| KDPII test — FrameByFrame 9라벨 한정 | 4,891 | **0.9383** | — | — | 0.6824 | — |
+| BCCard validation · ko | 10,743 | **0.9826** | 0.9824 | 0.9594¹ | — | 0.4031 |
+| BCCard validation · en | 3,781 | **0.9700** | 0.9632 | 0.9653 | — | 0.5295 |
+| 합성 heldout v2 — 32 라벨 | 670 | **0.9652** | 0.9643 | 0.5328 | — | 0.5035 |
 
 ¹ BCCard 모델 카드의 자체 보고치 0.9824 는 측정 방식 미공개. 표의 값은 이 리포 스코어러로 동일 조건에서 측정. 베이스라인을 자기 라벨 한정 F1(BCCard 29라벨 0.4636, Azure 매핑 라벨 0.4741)로 좁혀도 격차 유지. FrameByFrame 은 9 라벨만 지원해 KDPII 외 벤치는 측정하지 않음. 영어(BCCard val · en)에서는 INT8 이 BCCard 1.4B 에 0.2pt 뒤진다. per-entity 수치는 `eval_*.json`, 측정 조건은 `EVIDENCE.md`.
 
