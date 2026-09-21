@@ -3,6 +3,7 @@
 한국어·영어 개인정보 탐지용 토큰 분류 모델. KoELECTRA-base-v3 (110M) 를 32 라벨로 파인튜닝했고 INT8 ONNX(143MB)로 CPU 에서 구동합니다.
 
 - 모델 가중치: [GitHub Releases](https://github.com/WontaeKim89/veil-pii-ko-lite/releases) 또는 **https://huggingface.co/1T/veil-pii-ko-lite** (fp32 safetensors + INT8 ONNX)
+- 도커 이미지: **https://hub.docker.com/r/zzang9680/veil-pii** — `slim` · `presidio`, amd64/arm64
 - 근거표·측정 조건: [`release/EVIDENCE.md`](release/EVIDENCE.md) · 모델 카드: [`release/MODEL_CARD.md`](release/MODEL_CARD.md)
 - 4개 모델 동시 비교 데모: [`playground/`](playground/) (Azure VM 에 배포, 운영 중일 때 `https://20-249-59-7.sslip.io`)
 
@@ -73,7 +74,64 @@
 
 ---
 
-## 사용
+## 도커로 바로 쓰기
+
+설치 없이 컨테이너만 띄우면 된다. 모델 가중치가 이미지 안에 들어 있어 네트워크 없이 동작한다.
+
+```bash
+docker run -d -p 8080:8080 --name veil zzang9680/veil-pii:slim
+
+curl -s localhost:8080/detect -H 'Content-Type: application/json' \
+  -d '{"text":"담당자 김철수(010-1234-5678)에게 문의. 주민번호 900101-1234567"}'
+# {"spans":[{"start":4,"end":7,"label":"PERSON","score":0.9999}, ...],
+#  "ms":14, "summary":{"total":3,"by_label":{...},"sensitive":1}}
+```
+
+### 태그
+
+| 태그 | 크기(압축) | 내용 |
+|---|---:|---|
+| `slim` | 235 MB | 탐지 + 익명화 3종. 기본값 |
+| `presidio` | 300 MB | `slim` + Presidio 어댑터·Anonymizer 연산자 |
+
+`slim-1.0.0` · `presidio-1.0.0` 처럼 버전 고정 태그도 있고, 필요하면 `*-amd64` · `*-arm64` 로 아키텍처를 직접 지정할 수 있다.
+기본 태그는 amd64·arm64 매니페스트라 pull 하면 환경에 맞는 것이 내려온다.
+두 이미지의 탐지 결과는 같다 — Presidio 는 탐지에 관여하지 않고 익명화 연산자와 표준 인터페이스만 더한다.
+
+```bash
+docker run -d -p 8080:8080 zzang9680/veil-pii:presidio
+curl -s localhost:8080/healthz    # {"presidio": true, ...} 면 presidio 판
+```
+
+### 엔드포인트
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/detect` | `{"text": "...", "threshold": 0.0}` → 스팬 목록 + 감사 요약 |
+| POST | `/mask` | `{"text": "...", "policy": "default\|hash\|partial"}` |
+| POST | `/batch` | 여러 건 한 번에 |
+| GET | `/healthz` `/labels` `/docs` | 상태 · 라벨 32종 · OpenAPI |
+
+### 가리기 정책
+
+```bash
+curl -s localhost:8080/mask -H 'Content-Type: application/json' \
+  -d '{"text":"김철수 010-1234-5678, 주민번호 900101-1234567","policy":"partial"}'
+```
+
+| policy | 결과 |
+|---|---|
+| `default` | `[PERSON] [PHONE], 주민번호 [RRN]` |
+| `hash` | `[PERSON:2f105e5921] [PHONE:126697a64a] …` — 같은 값은 같은 토큰 |
+| `partial` | `김*수 010-****-5678, 주민번호 900101-*******` |
+
+`hash` 를 쓸 때는 `-e VEIL_HASH_SALT=...` 를 지정한다. 지정하지 않으면 재시작할 때마다 토큰이 바뀐다.
+그 외 `VEIL_THREADS`(기본 4), `VEIL_MAX_CHARS`(20000), `VEIL_MODEL_DIR` 을 환경변수로 조정할 수 있다.
+
+입력 문장은 로그에 남지 않는다. 컨테이너는 비루트(uid 10001)로 돌고 `--read-only --tmpfs /tmp` 로도 뜬다.
+폐쇄망 반입 절차는 [`docker/OFFLINE.md`](docker/OFFLINE.md) 참고.
+
+## 파이썬 패키지로 쓰기
 
 가중치는 두 곳에 있다. 어느 쪽이든 `release/` 에 있는 `config.json`·토크나이저·`veil.py` 와 같이 쓴다.
 

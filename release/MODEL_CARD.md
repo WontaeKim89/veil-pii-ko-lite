@@ -71,6 +71,7 @@ model-index:
 [![License](https://img.shields.io/badge/license-Apache%202.0-2ea44f?style=flat-square)](#라이선스--고지)
 [![ONNX](https://img.shields.io/badge/ONNX%20INT8-143%20MB-167e6c?style=flat-square)](#파일)
 [![GitHub](https://img.shields.io/badge/GitHub-WontaeKim89%2Fveil--pii--ko--lite-181717?style=flat-square&logo=github)](https://github.com/WontaeKim89/veil-pii-ko-lite)
+[![Docker](https://img.shields.io/badge/Docker-zzang9680%2Fveil--pii-2496ed?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/zzang9680/veil-pii)
 
 한국어 개인정보 탐지용 토큰 분류 모델. KoELECTRA-base-v3(110M) 파인튜닝, 32 라벨, INT8 ONNX 로 CPU 추론.
 
@@ -135,6 +136,30 @@ model = AutoModelForTokenClassification.from_pretrained("1T/veil-pii-ko-lite")
 - `mask(text, fmt="[{label}]")` → 마스킹 문자열.
 - 생성자 옵션: `max_len=512`, `stride=128`(슬라이딩 창), `threads=4`, `o_bias=0.0`(양수면 재현율 우선), `merge_adjacent=("ADDRESS",)`(공백 1개 이내 인접 동일 라벨 병합. 벤치 재현 시 `()`).
 - 입력 길이 제한 없음. 512 토큰 창을 128 겹쳐 밀고 경계 스팬 병합.
+
+### 도커
+
+가중치까지 들어 있는 이미지를 쓰면 설치 과정이 없다. 네트워크 없이 동작한다.
+
+```bash
+docker run -d -p 8080:8080 --name veil zzang9680/veil-pii:slim
+
+curl -s localhost:8080/detect -H 'Content-Type: application/json' \
+  -d '{"text":"담당자 김철수(010-1234-5678)에게 문의"}'
+
+curl -s localhost:8080/mask -H 'Content-Type: application/json' \
+  -d '{"text":"김철수 010-1234-5678","policy":"partial"}'
+# {"text":"김*수 010-****-5678", ...}
+```
+
+| 태그 | 크기(압축) | 내용 |
+|---|---:|---|
+| `slim` | 235 MB | 탐지 + 익명화 3종(`default`/`hash`/`partial`) |
+| `presidio` | 300 MB | `slim` + Presidio 어댑터·Anonymizer 연산자 |
+
+둘 다 amd64·arm64 매니페스트이고 탐지 결과는 동일하다. 버전 고정은 `slim-1.0.0` · `presidio-1.0.0`.
+엔드포인트는 `/detect` `/mask` `/batch` `/healthz` `/labels` `/docs`, 환경변수는 `VEIL_THREADS` `VEIL_HASH_SALT` `VEIL_MAX_CHARS` 를 쓴다.
+태그 목록: https://hub.docker.com/r/zzang9680/veil-pii/tags
 
 ## 라벨 (32)
 
