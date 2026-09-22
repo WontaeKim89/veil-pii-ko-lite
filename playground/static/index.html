@@ -19,8 +19,8 @@ header{display:flex;align-items:center;gap:12px;padding:14px 28px;border-bottom:
 header .logo{width:26px;height:26px;color:var(--accent)}
 header h1{font-size:16px;margin:0;color:var(--ink);font-weight:700;letter-spacing:-.01em}
 header span{color:var(--muted);font-size:12px}
-main{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
-.top{max-width:1080px;margin:0 auto}
+main{max-width:1520px;margin:0 auto;padding:24px 24px 56px}
+.top{max-width:none}
 .lead{text-align:center;font-size:24px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:14px 0 6px}
 .lead-sub{text-align:center;font-size:13.5px;color:var(--muted);margin:0 0 16px}
 .search{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 18px;border:1px solid var(--line);border-radius:999px;background:var(--surface);transition:border-color .15s}
@@ -69,29 +69,35 @@ main{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
 @media (max-width:640px){.ref{margin:36px -14px 0;padding:22px 14px 28px}}
 .row{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
 .row.ours{border-color:#3e4a9a}
-.tag{display:inline-flex;align-items:baseline;gap:10px;padding:5px 14px 6px 14px;border-radius:0 0 12px 0;background:var(--navy-soft);font-size:12px;color:var(--text);max-width:100%;cursor:pointer;border:0;font-family:inherit;text-align:left;transition:filter .12s}
-.tag:hover{filter:brightness(1.12)}
-.tag .chev{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);transition:transform .15s;display:inline-block}
-.row.open .tag .chev{transform:rotate(90deg)}
-.row.ours .tag .chev{color:rgba(255,255,255,.7)}
-.cats{display:none;border-top:1px solid var(--line);padding:12px 18px 14px;background:color-mix(in srgb,var(--navy-soft) 45%,transparent)}
-.row.open .cats{display:block}
-.cats .hd{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;font-size:12px;color:var(--muted)}
-.cats .hd b{font-size:13px;color:var(--ink)}
-.cats .hd .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:1px 8px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--text)}
-.cats .grp{display:flex;align-items:flex-start;gap:10px;padding:5px 0}
-.cats .grp+.grp{border-top:1px dashed var(--line)}
-.cats .gname{flex:0 0 92px;font-size:11.5px;color:var(--muted);padding-top:3px;display:flex;align-items:center;gap:5px}
-.cats .gname i{width:8px;height:8px;border-radius:2px;display:inline-block;background:var(--c)}
-.cats .chips{display:flex;flex-wrap:wrap;gap:4px}
-.cats .c{font-family:"IBM Plex Mono",monospace;font-size:10.5px;padding:2px 7px;border-radius:5px;background:var(--c);color:var(--text)}
-.cats .note{margin-top:10px;font-size:11.5px;color:var(--muted);line-height:1.55}
-.cats .note a{color:var(--accent-ink)}
+.tag{display:inline-flex;align-items:baseline;gap:10px;padding:5px 14px 6px 14px;border-radius:0 0 12px 0;background:var(--navy-soft);font-size:12px;color:var(--text);max-width:100%}
 .tag b{font-size:12.5px;color:var(--ink)}
 .tag i{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
 .tag .n{font-size:11.5px;color:var(--muted)}
 .tag .ok{color:var(--accent-ink);font-weight:600} .tag .bad{color:var(--signal);font-weight:600}
 .row.ours .tag{background:var(--accent)} .row.ours .tag b,.row.ours .tag i,.row.ours .tag .n,.row.ours .tag .ok{color:#fff} .row.ours .tag i,.row.ours .tag .n{opacity:.85} .row.ours .tag .bad{color:#ffd0d4}
+/* ---- 좌측 사이드바: 탐지 카테고리 ---- */
+.shell{display:grid;grid-template-columns:248px minmax(0,1fr);gap:26px;align-items:start;max-width:1440px;margin:0 auto}
+.side{position:sticky;top:20px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 14px 16px}
+.side h2{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin:0 0 10px}
+.side .pick{display:flex;flex-direction:column;gap:3px;margin-bottom:14px}
+.side .pick button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:7px 9px;border:1px solid transparent;border-radius:8px;background:none;color:var(--text);font:inherit;font-size:12.5px;cursor:pointer;text-align:left}
+.side .pick button:hover{background:var(--navy-soft)}
+.side .pick button[aria-selected="true"]{background:var(--navy-soft);border-color:var(--line);font-weight:600;color:var(--ink)}
+.side .pick button[aria-selected="true"].ours{border-color:var(--accent)}
+.side .pick .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side .pick .ct{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);flex:none}
+.side .total{display:flex;align-items:baseline;gap:6px;padding:8px 10px;border-radius:8px;background:var(--navy-soft);margin-bottom:12px}
+.side .total b{font-family:"IBM Plex Mono",monospace;font-size:20px;color:var(--ink);line-height:1}
+.side .total span{font-size:11.5px;color:var(--muted)}
+.side .g{margin-bottom:10px}
+.side .g .gh{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-bottom:5px}
+.side .g .gh i{width:8px;height:8px;border-radius:2px;background:var(--c);display:inline-block}
+.side .g .gh em{font-style:normal;font-family:"IBM Plex Mono",monospace;margin-left:auto}
+.side .g .chips{display:flex;flex-wrap:wrap;gap:3px}
+.side .g .c{font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 6px;border-radius:5px;background:var(--c);color:var(--text);line-height:1.5}
+.side .foot{border-top:1px solid var(--line);margin-top:12px;padding-top:10px;font-size:11px;color:var(--muted);line-height:1.5}
+.side .foot a{color:var(--accent-ink)}
+@media (max-width:1100px){.shell{grid-template-columns:1fr;gap:16px}.side{position:static}}
 .txt{padding:10px 18px 14px;font-size:14.5px;line-height:2.15;word-break:keep-all;white-space:pre-wrap;min-height:48px}
 .txt.wait{color:var(--muted);font-size:12.5px}
 .txt.err{color:var(--signal);font-size:12.5px}
@@ -129,6 +135,9 @@ footer a{color:var(--accent-ink)}
   <h1>Veil PII Playground</h1>
 </header>
 <main>
+ <div class="shell">
+  <aside class="side" id="side"></aside>
+  <div>
   <div class="top">
   <div class="lead">개인정보가 섞인 문장을 넣어 보세요</div>
   <div class="search">
@@ -142,6 +151,8 @@ footer a{color:var(--accent-ink)}
   <div class="legend">
     <span style="--c:var(--g-person)">사람</span><span style="--c:var(--g-contact)">연락처·주소망</span><span style="--c:var(--g-fin)">금융</span><span style="--c:var(--g-id)">식별번호</span><span style="--c:var(--g-place)">날짜·주소</span><span style="--c:var(--g-org)">조직</span><span class="lg-miss">회색 점선 = 못 잡음</span><span class="lg-fp">붉은 점선 = 오탐</span><span class="lg-part">밑줄 점선 = 경계 불일치</span><span style="margin-left:2px">(예시 문장에서만 판정)</span>
   </div>
+  </div>
+ </div>
   <section class="ref"><div class="in">
     <div class="rh"><span class="eb">Reference</span><h2>모델 비교표</h2></div>
     <div class="wrap"><table id="mtable"><thead><tr><th>모델</th><th>파라미터 · 배포</th><th>라벨</th><th>라이선스</th><th>KDPII test F1</th><th>BCCard val(ko) F1</th><th>합성 heldout F1</th><th>실행</th></tr></thead><tbody></tbody></table></div>
@@ -191,17 +202,8 @@ function tally(spans, gold){
 }
 
 // ---- 행 렌더
-const GNAME = {person:"사람·조직", contact:"연락처·망", fin:"금융", id:"식별번호", place:"날짜·주소", org:"조직"};
-const GORDER = ["person","org","place","contact","fin","id"];
-function catsEl(m){
-  const by = {};
-  for (const l of m.label_list) (by[grp(l)] ||= []).push(l);
-  const rows = GORDER.filter(g => by[g]).map(g =>
-    `<div class="grp"><span class="gname" style="--c:var(--g-${g})"><i></i>${GNAME[g] || g}</span><span class="chips">${by[g].sort().map(l => `<span class="c" style="--c:var(--g-${g})">${l}</span>`).join("")}</span></div>`).join("");
-  return `<div class="cats"><div class="hd"><b>탐지 카테고리</b><span class="cnt">${m.label_list.length}종</span><span>${esc(m.params)} · ${esc(m.runtime)}</span><a href="${esc(m.link)}" target="_blank" rel="noopener" style="margin-left:auto;color:var(--accent-ink);font-size:11.5px">출처 ↗</a></div>${rows}<div class="note">${esc(m.caveat)}</div></div>`;
-}
 function rowEl(m){
-  return `<div class="row${m.ours ? " ours" : ""}" id="row-${m.id}"><button class="tag" type="button" aria-expanded="false" onclick="const r=this.closest('.row');const o=r.classList.toggle('open');this.setAttribute('aria-expanded',o)"><span class="chev">▸</span><b>${esc(m.name)}</b><i id="ms-${m.id}">${esc(m.params)} · ${esc(m.runtime.split(" · ")[0])}</i><span class="n" id="n-${m.id}">${m.label_list.length} labels</span></button><div class="txt wait" id="txt-${m.id}">문장을 입력하고 탐지 실행을 누르세요</div>${catsEl(m)}</div>`;
+  return `<div class="row${m.ours ? " ours" : ""}" id="row-${m.id}"><div class="tag"><b>${esc(m.name)}</b><i id="ms-${m.id}">${esc(m.params)} · ${esc(m.runtime.split(" · ")[0])}</i><span class="n" id="n-${m.id}">${m.label_list.length} labels</span></div><div class="txt wait" id="txt-${m.id}">문장을 입력하고 탐지 실행을 누르세요</div></div>`;
 }
 function fillRow(m, res, text){
   $(`txt-${m.id}`).className = "txt"; $(`txt-${m.id}`).innerHTML = paint(text, res.spans, gold);
@@ -250,6 +252,24 @@ document.addEventListener("mouseover", e => {
 });
 document.addEventListener("mouseout", e => { if (e.target.closest("mark")) document.querySelectorAll("mark.hl").forEach(x => x.classList.remove("hl")); });
 
+// ---- 좌측 사이드바: 선택한 모델의 탐지 카테고리
+const GNAME = {person:"사람", org:"조직", place:"날짜·주소", contact:"연락처·망", fin:"금융", id:"식별번호"};
+const GORDER = ["person","org","place","contact","fin","id"];
+let sideSel = null;
+function sidebar(id){
+  sideSel = id || sideSel || MODELS[0].id;
+  const m = MODELS.find(x => x.id === sideSel);
+  const by = {};
+  for (const l of m.label_list) (by[grp(l)] ||= []).push(l);
+  const groups = GORDER.filter(g => by[g]).map(g =>
+    `<div class="g"><div class="gh" style="--c:var(--g-${g})"><i></i>${GNAME[g] || g}<em>${by[g].length}</em></div><div class="chips">${by[g].sort().map(l => `<span class="c" style="--c:var(--g-${g})">${l}</span>`).join("")}</div></div>`).join("");
+  $("side").innerHTML = `<h2>탐지 카테고리</h2>
+    <div class="pick">${MODELS.map(x => `<button type="button" class="${x.ours ? "ours" : ""}" aria-selected="${x.id === sideSel}" onclick="sidebar('${x.id}')"><span class="nm">${esc(x.name)}</span><span class="ct">${x.label_list.length}</span></button>`).join("")}</div>
+    <div class="total"><b>${m.label_list.length}</b><span>종 · ${esc(m.params)}</span></div>
+    ${groups}
+    <div class="foot">${esc(m.caveat)}<br><a href="${esc(m.link)}" target="_blank" rel="noopener">출처 ↗</a></div>`;
+}
+
 // ---- 비교표
 function mtable(){
   const tb = $("mtable").querySelector("tbody"); tb.innerHTML = "";
@@ -272,7 +292,7 @@ function mtable(){
   [MODELS, SCEN, HEALTH] = await Promise.all([fetch("/api/models").then(r => r.json()), fetch("/api/scenarios").then(r => r.json()), fetch("/healthz").then(r => r.json()).catch(() => ({}))]);
   MODELS.sort((a,b) => a.order - b.order);
   $("rows").innerHTML = MODELS.map(rowEl).join("");
-  mtable();
+  mtable(); sidebar();
   for (const s of SCEN){ const b = document.createElement("button"); b.className = "chip"; b.type = "button"; b.dataset.id = s.id; b.textContent = s.title; b.onclick = () => { pick(s); runAll(); }; $("chips").append(b); }
   if (SCEN.length){ pick(SCEN[0]); runAll(); }
 })();
