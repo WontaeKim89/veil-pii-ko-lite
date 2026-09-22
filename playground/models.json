@@ -133,8 +133,7 @@
    "ACCOUNT_NUMBER",
    "USER_ID",
    "IPADDRESS",
-   "URL",
-   "SECRET"
+   "URL"
   ],
   "link": "https://huggingface.co/FrameByFrame/privacy-filter-korean"
  },

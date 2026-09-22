@@ -69,7 +69,24 @@ main{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
 @media (max-width:640px){.ref{margin:36px -14px 0;padding:22px 14px 28px}}
 .row{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
 .row.ours{border-color:#3e4a9a}
-.tag{display:inline-flex;align-items:baseline;gap:10px;padding:5px 14px 6px 14px;border-radius:0 0 12px 0;background:var(--navy-soft);font-size:12px;color:var(--text);max-width:100%}
+.tag{display:inline-flex;align-items:baseline;gap:10px;padding:5px 14px 6px 14px;border-radius:0 0 12px 0;background:var(--navy-soft);font-size:12px;color:var(--text);max-width:100%;cursor:pointer;border:0;font-family:inherit;text-align:left;transition:filter .12s}
+.tag:hover{filter:brightness(1.12)}
+.tag .chev{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);transition:transform .15s;display:inline-block}
+.row.open .tag .chev{transform:rotate(90deg)}
+.row.ours .tag .chev{color:rgba(255,255,255,.7)}
+.cats{display:none;border-top:1px solid var(--line);padding:12px 18px 14px;background:color-mix(in srgb,var(--navy-soft) 45%,transparent)}
+.row.open .cats{display:block}
+.cats .hd{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;font-size:12px;color:var(--muted)}
+.cats .hd b{font-size:13px;color:var(--ink)}
+.cats .hd .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:1px 8px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--text)}
+.cats .grp{display:flex;align-items:flex-start;gap:10px;padding:5px 0}
+.cats .grp+.grp{border-top:1px dashed var(--line)}
+.cats .gname{flex:0 0 92px;font-size:11.5px;color:var(--muted);padding-top:3px;display:flex;align-items:center;gap:5px}
+.cats .gname i{width:8px;height:8px;border-radius:2px;display:inline-block;background:var(--c)}
+.cats .chips{display:flex;flex-wrap:wrap;gap:4px}
+.cats .c{font-family:"IBM Plex Mono",monospace;font-size:10.5px;padding:2px 7px;border-radius:5px;background:var(--c);color:var(--text)}
+.cats .note{margin-top:10px;font-size:11.5px;color:var(--muted);line-height:1.55}
+.cats .note a{color:var(--accent-ink)}
 .tag b{font-size:12.5px;color:var(--ink)}
 .tag i{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
 .tag .n{font-size:11.5px;color:var(--muted)}
@@ -174,8 +191,17 @@ function tally(spans, gold){
 }
 
 // ---- 행 렌더
+const GNAME = {person:"사람·조직", contact:"연락처·망", fin:"금융", id:"식별번호", place:"날짜·주소", org:"조직"};
+const GORDER = ["person","org","place","contact","fin","id"];
+function catsEl(m){
+  const by = {};
+  for (const l of m.label_list) (by[grp(l)] ||= []).push(l);
+  const rows = GORDER.filter(g => by[g]).map(g =>
+    `<div class="grp"><span class="gname" style="--c:var(--g-${g})"><i></i>${GNAME[g] || g}</span><span class="chips">${by[g].sort().map(l => `<span class="c" style="--c:var(--g-${g})">${l}</span>`).join("")}</span></div>`).join("");
+  return `<div class="cats"><div class="hd"><b>탐지 카테고리</b><span class="cnt">${m.label_list.length}종</span><span>${esc(m.params)} · ${esc(m.runtime)}</span><a href="${esc(m.link)}" target="_blank" rel="noopener" style="margin-left:auto;color:var(--accent-ink);font-size:11.5px">출처 ↗</a></div>${rows}<div class="note">${esc(m.caveat)}</div></div>`;
+}
 function rowEl(m){
-  return `<div class="row${m.ours ? " ours" : ""}" id="row-${m.id}"><div class="tag"><b>${esc(m.name)}</b><i id="ms-${m.id}">${esc(m.params)} · ${esc(m.runtime.split(" · ")[0])}</i><span class="n" id="n-${m.id}">${m.labels} labels</span></div><div class="txt wait" id="txt-${m.id}">문장을 입력하고 탐지 실행을 누르세요</div></div>`;
+  return `<div class="row${m.ours ? " ours" : ""}" id="row-${m.id}"><button class="tag" type="button" aria-expanded="false" onclick="const r=this.closest('.row');const o=r.classList.toggle('open');this.setAttribute('aria-expanded',o)"><span class="chev">▸</span><b>${esc(m.name)}</b><i id="ms-${m.id}">${esc(m.params)} · ${esc(m.runtime.split(" · ")[0])}</i><span class="n" id="n-${m.id}">${m.label_list.length} labels</span></button><div class="txt wait" id="txt-${m.id}">문장을 입력하고 탐지 실행을 누르세요</div>${catsEl(m)}</div>`;
 }
 function fillRow(m, res, text){
   $(`txt-${m.id}`).className = "txt"; $(`txt-${m.id}`).innerHTML = paint(text, res.spans, gold);
