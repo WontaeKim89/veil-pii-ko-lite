@@ -97,7 +97,11 @@ KoELECTRA-base-v3 (110M) 를 통해 32개의 PII Category에 대한 분류가 �
 | BCCard validation · en | 3,781 | **0.9700** | 0.9632 | 0.9653 | — | 0.5295 |
 | 합성 heldout v2 — 32 라벨 | 670 | **0.9652** | 0.9643 | 0.5328 | — | 0.5035 |
 
-¹ BCCard 모델 카드의 자체 보고치 0.9824 는 측정 방식 미공개. 표의 값은 이 리포 스코어러로 동일 조건에서 측정. 베이스라인을 자기 라벨 한정 F1(BCCard 29라벨 0.4636, Azure 매핑 라벨 0.4741)로 좁혀도 격차 유지. FrameByFrame 은 9 라벨만 지원해 KDPII 외 벤치는 측정하지 않음. 영어(BCCard val · en)에서는 INT8 이 BCCard 1.4B 에 0.2pt 뒤진다. per-entity 수치는 `eval_*.json`, 측정 조건은 `EVIDENCE.md`.
+¹ BCCard 모델 카드에 적힌 0.9824 는 어떤 방식으로 측정했는지 공개되어 있지 않습니다. 위 표의 값은 모두 이 저장소의 스코어러로 같은 조건에서 다시 측정한 것입니다.
+
+비교 대상이 불리하지 않도록, 각 모델이 아는 라벨만으로 범위를 좁혀서도 측정해 보았습니다(BCCard 29라벨 0.4636, Azure 매핑 라벨 0.4741). 그래도 격차는 그대로였습니다. FrameByFrame 은 9개 라벨만 지원하기 때문에 KDPII 외의 벤치는 측정하지 않았습니다. 영어 데이터(BCCard val · en)에서는 INT8 이 BCCard 1.4B 에 0.2pt 뒤집니다.
+
+라벨별 상세 수치는 `eval_*.json`, 측정 조건은 `EVIDENCE.md` 를 참고하시면 됩니다.
 
 ## 사용법
 
@@ -128,18 +132,27 @@ tok = AutoTokenizer.from_pretrained("1T/veil-pii-ko-lite")
 model = AutoModelForTokenClassification.from_pretrained("1T/veil-pii-ko-lite")
 ```
 
-로짓을 그대로 argmax 하면 BIOES 제약이 깨진 스팬 섞임. `Veil` 클래스는 ONNX 전용이나, 같은 파일의 전이 행렬·`tags_to_spans`·`strip_particles` 를 fp32 로짓에 적용하면 결과 동일.
+로짓을 그대로 argmax 하면 BIOES 규칙이 깨진 스팬이 섞여 나옵니다. `Veil` 클래스 자체는 ONNX 전용이지만, 같은 파일에 들어 있는 전이 행렬과 `tags_to_spans`, `strip_particles` 를 fp32 로짓에 적용하면 같은 결과를 얻을 수 있습니다.
 
 ### 출력 · 옵션
 
-- `predict(text)` → `list[{"start","end","label","score"}]`. 문자 오프셋(원문 슬라이스 그대로), 스팬 비중첩.
-- `mask(text, fmt="[{label}]")` → 마스킹 문자열.
-- 생성자 옵션: `max_len=512`, `stride=128`(슬라이딩 창), `threads=4`, `o_bias=0.0`(양수면 재현율 우선), `merge_adjacent=("ADDRESS",)`(공백 1개 이내 인접 동일 라벨 병합. 벤치 재현 시 `()`).
-- 입력 길이 제한 없음. 512 토큰 창을 128 겹쳐 밀고 경계 스팬 병합.
+`predict(text)` 는 `list[{"start", "end", "label", "score"}]` 를 돌려줍니다. `start` 와 `end` 는 문자 오프셋이라 원문을 그대로 잘라내면 되고, 스팬끼리 겹치지 않습니다. `mask(text, fmt="[{label}]")` 를 쓰면 마스킹된 문자열을 바로 받을 수 있습니다.
+
+생성자 옵션은 다음과 같습니다.
+
+| 옵션 | 기본값 | 설명 |
+|---|---|---|
+| `max_len` | 512 | 한 번에 처리할 토큰 수 |
+| `stride` | 128 | 슬라이딩 창이 겹치는 폭 |
+| `threads` | 4 | ONNX 스레드 수 |
+| `o_bias` | 0.0 | 양수로 올리면 재현율 쪽으로 기울어집니다 |
+| `merge_adjacent` | `("ADDRESS",)` | 공백 1개 이내로 붙은 같은 라벨을 합칩니다. 벤치마크를 재현하실 때는 `()` 로 두시면 됩니다 |
+
+입력 길이에는 제한이 없습니다. 512 토큰 창을 128 씩 겹쳐 밀면서 전체를 훑고, 창 경계에 걸친 스팬은 뒤에서 이어 붙입니다.
 
 ### 컨테이너
 
-가중치가 포함된 이미지를 사용하면 설치 과정이 없다. 네트워크 없이 기동한다.
+가중치까지 이미지 안에 넣어 두었기 때문에 따로 설치할 것이 없고, 네트워크가 없는 환경에서도 그대로 기동합니다.
 
 ```bash
 docker run -d -p 8080:8080 --name veil zzang9680/veil-pii:slim
@@ -157,13 +170,13 @@ curl -s localhost:8080/mask -H 'Content-Type: application/json' \
 | `slim` | 235 MB | 탐지 + 익명화 3종(`default`/`hash`/`partial`) |
 | `presidio` | 300 MB | `slim` + Presidio 어댑터·Anonymizer 연산자 |
 
-두 태그 모두 amd64·arm64 멀티 아키텍처 매니페스트이며 탐지 결과는 동일하다. 버전 고정은 `slim-1.0.0` · `presidio-1.0.0` 을 쓴다.
-엔드포인트는 `/detect` `/mask` `/batch` `/healthz` `/labels` `/docs`, 환경변수는 `VEIL_THREADS` `VEIL_HASH_SALT` `VEIL_MAX_CHARS` 를 제공한다.
-태그 목록: https://hub.docker.com/r/zzang9680/veil-pii/tags
+두 태그 모두 amd64 와 arm64 를 함께 담은 멀티 아키텍처 이미지이고, 탐지 결과는 서로 같습니다. 버전을 고정하실 때는 `slim-1.0.0` 이나 `presidio-1.0.0` 을 쓰시면 됩니다.
+
+엔드포인트는 `/detect` `/mask` `/batch` `/healthz` `/labels` `/docs` 를 제공하고, 환경변수는 `VEIL_THREADS` `VEIL_HASH_SALT` `VEIL_MAX_CHARS` 로 조정합니다. 전체 태그 목록은 https://hub.docker.com/r/zzang9680/veil-pii/tags 에서 확인하실 수 있습니다.
 
 #### Presidio 어댑터
 
-REST 응답은 두 이미지가 동일하다. 스팬은 물론 `hash` 토큰 값까지 일치한다. 아래 세 가지가 필요한 경우에만 `presidio` 를 선택한다.
+REST 응답은 두 이미지가 완전히 같습니다. 같은 문장을 넣으면 스팬은 물론 `hash` 정책의 토큰 값까지 일치합니다. 그래서 HTTP 로만 쓰신다면 `slim` 으로 충분하고, 아래 세 가지가 필요한 경우에만 `presidio` 를 고르시면 됩니다.
 
 ```bash
 docker run -d -p 8080:8080 -e VEIL_HASH_SALT=my-secret --name veil zzang9680/veil-pii:presidio
@@ -195,12 +208,19 @@ print('복원:',d.text,'| 일치:',d.text==t)"
 #   복원: 담당자 김철수(010-1234-5678)에게 문의 | 일치: True
 ```
 
-`partial` 은 두 경로의 자릿수 규칙을 일치시켰다. `default`·`hash` 의 출력 표기는 Presidio 쪽이 다르다(꺾쇠 기호, 전체 SHA-256).
+`partial` 은 REST 경로와 자릿수 규칙을 맞춰 두었습니다. 두 경로의 부분 마스킹 결과가 달라지면 감사 대조가 어긋나기 때문입니다. `default` 와 `hash` 의 출력 표기는 Presidio 쪽이 다릅니다(꺾쇠 기호, 전체 SHA-256).
 
-실측 비교(Apple Silicon, 74자 20회): 기동 407→269 ms, 탐지 13 ms 동일, 메모리 304→360 MB, 이미지 235→300 MB.
+두 이미지를 직접 재 보았습니다(Apple Silicon, 74자 문장 20회).
 
-zsh 에서 여러 줄 heredoc 을 붙여 넣으면 bracketed paste 제어문자 때문에 `zsh: bad pattern: [200~docker` 가 발생할 수 있다.
-위 예시는 `python -c "..."` 단일 구문이라 해당하지 않는다. heredoc 이 필요하면 `docker exec -i veil python < script.py` 로 파일을 전달한다(`-i` 필수).
+| | slim | presidio |
+|---|---:|---:|
+| 탐지(중앙값) | 13 ms | 13 ms |
+| 메모리 | 304 MB | 360 MB |
+| 이미지(압축) | 235 MB | 300 MB |
+
+탐지 속도는 같고 메모리만 56MB 정도 더 씁니다.
+
+zsh 에서 여러 줄짜리 heredoc 을 붙여 넣으면 터미널의 bracketed paste 제어문자가 섞여 들어가 `zsh: bad pattern: [200~docker` 가 날 수 있습니다. 위 예시는 `python -c "..."` 한 덩어리라 이 문제를 타지 않습니다. heredoc 을 쓰셔야 한다면 `docker exec -i veil python < script.py` 처럼 파일로 넘기시면 됩니다. 이때 `-i` 를 빼면 출력이 비어 나옵니다.
 
 
 ## 라벨 (32)
@@ -214,11 +234,11 @@ zsh 에서 여러 줄 heredoc 을 붙여 넣으면 bracketed paste 제어문자 
 | 기기·가입 | `IMEI` `DEVICE_SERIAL` `SUBSCRIBER_ID` `VEHICLE_PLATE` |
 | 기타 | `DATE` `GENERIC_ID` `SECRET` |
 
-BCCard 29종 + 신규 `VEHICLE_PLATE` `SUBSCRIBER_ID` `DEVICE_SERIAL`. 태깅은 BIOES(129 클래스). 매핑은 `config.json` 의 `id2label`.
+BCCard 공개 데이터의 29종에 차량번호(`VEHICLE_PLATE`), 가입번호(`SUBSCRIBER_ID`), 단말 일련번호(`DEVICE_SERIAL`) 를 추가했습니다. 태깅은 BIOES 방식이라 실제 클래스 수는 129개이고, 라벨 매핑은 `config.json` 의 `id2label` 에 있습니다.
 
 ## 실사용 시나리오
 
-상담·양식 형태 문장 11개를 4개 모델에 입력. 표기는 정답 일치 / 정답 수, +오탐. 차이가 난 항목만 수록.
+상담이나 양식에서 나올 법한 문장 11개를 4개 모델에 똑같이 넣어 보았습니다. 표기는 맞힌 개수 / 정답 개수 이고, 뒤의 `+숫자` 는 오탐 건수입니다. 모델 간 차이가 드러난 항목만 추렸습니다.
 
 | 시나리오 | Veil | BCCard 1.4B | FrameByFrame 1.4B | Azure |
 |---|---:|---:|---:|---:|
@@ -230,16 +250,7 @@ BCCard 29종 + 신규 `VEHICLE_PLATE` `SUBSCRIBER_ID` `DEVICE_SERIAL`. 태깅은
 | 이름 닮은 일반명사 — 정답은 무검출 | 오탐 2 | 오탐 2 | 오탐 2 | 0 |
 | 코드·해시·ISBN — 정답은 무검출 | 오탐 2 | 오탐 4 | 오탐 5 | 0 |
 
-이 모델의 오류: 주소 끝 `12층` 누락. 영문 조직명 `Hanwha Life` 미검출. 대괄호 안 ISO 날짜, `지난달 25일` 미검출. 과탐은 `전결`→PERSON, 커밋 해시→SECRET, ISBN→ACCOUNT_NUMBER.
-
-## 한계
-
-- CPU 지연. 4 vCPU 기준 512 토큰 237 ms(INT8), 128 토큰 61 ms. 16 스레드 512 토큰 108 ms. 짧은 문장 실시간 처리는 가능, 장문 일괄 처리는 스레드 증설 필요. 당초 목표 40 ms 는 미달.
-- 과탐. 커밋 해시·ISBN 을 `SECRET`·`ACCOUNT_NUMBER` 로, `전결` 같은 단어를 이름으로 판정하는 경우 있음. 한 절에 희귀 식별자가 3개 이상 몰리면 하나를 놓치는 경향.
-- DATE 라벨 관행 혼재. KDPII(생년월일만)와 BCCard(모든 날짜)를 섞어 학습.
-- 2020-10 이후 발급 주민번호는 체크섬 없음. 형태만으로 판정.
-- 외국인 이름·닉네임·초성 표기는 재현율 낮음.
-- 사람이 라벨링한 도메인 골든셋 평가는 아직 없음.
+이 모델이 틀린 부분도 함께 적어 둡니다. 주소 끝의 `12층` 을 빠뜨렸고, 영문 조직명 `Hanwha Life` 를 잡지 못했으며, 대괄호 안의 ISO 날짜와 `지난달 25일` 도 놓쳤습니다. 반대로 `전결` 을 사람 이름으로, 커밋 해시를 `SECRET` 으로, ISBN 을 `ACCOUNT_NUMBER` 로 잘못 잡는 경우가 있었습니다.
 
 ## 재현
 
