@@ -1,6 +1,10 @@
-# Veil-PII-Ko-Lite
+<div align="center">
 
-한국어·영어 개인정보 탐지용 토큰 분류 모델. KoELECTRA-base-v3 (110M) 를 32 라벨로 파인튜닝했고 INT8 ONNX(143MB)로 CPU 단독 추론한다.
+<img src="release/assets/banner.svg" alt="Veil-PII-Ko-Lite" width="100%"/>
+
+CPU환경에서 빠르게 구동이 가능한 한국어 개인정보 탐지용 토큰 분류 모델입니다.
+
+</div>
 
 - 모델 가중치: [GitHub Releases](https://github.com/WontaeKim89/veil-pii-ko-lite/releases) 또는 **https://huggingface.co/1T/veil-pii-ko-lite** (fp32 safetensors + INT8 ONNX)
 - 도커 이미지: **https://hub.docker.com/r/zzang9680/veil-pii** — `slim` · `presidio`, amd64/arm64
