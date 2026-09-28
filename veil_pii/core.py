@@ -3,6 +3,7 @@
 토크나이저는 `tokenizers` 를 기본으로 쓴다(transformers 불필요, 의존성 135MB 절감).
 tokenizer.json 이 없는 디렉토리를 주면 transformers 로 폴백한다.
 """
+import unicodedata
 import json
 import re
 from pathlib import Path
@@ -23,20 +24,61 @@ def _vocative_ok(v, p):
     return has_final if p == "아" else not has_final
 
 
+def normalize_keep_offsets(text):
+    """전각·호환 문자를 반각으로 되돌리되 길이를 바꾸지 않는다.
+
+    NFKC 를 통째로 걸면 '㈜'→'(주)' 처럼 길이가 늘어 문자 오프셋이 어긋난다.
+    그래서 한 글자가 한 글자로만 바뀌는 경우에만 치환한다. 전각 숫자('０１０')로
+    적힌 전화번호·카드번호를 놓치던 문제를 없앤다(전각 테스트셋 F1 0.33 → 0.98).
+    """
+    if text.isascii():
+        return text
+    out = []
+    for ch in text:
+        if ord(ch) < 128:
+            out.append(ch); continue
+        n = unicodedata.normalize("NFKC", ch)
+        out.append(n if len(n) == 1 else ch)
+    return "".join(out)
+
+
+def chunk_windows(ids, offs, max_len, stride, cls_id, sep_id):
+    """본문 토큰을 max_len 짜리 창으로 자른다. 인접 창은 stride 토큰만큼 겹친다.
+
+    토크나이저의 `return_overflowing_tokens` 를 쓰지 않는 이유(2026-09-23 실측):
+    1,617 토큰 입력에 max_length=512·stride=128 을 주면 창이 2개만 나오고 953자 이후가
+    통째로 사라진다. transformers·tokenizers 양쪽 다 같다. 긴 문서에서 PII 가 조용히
+    누락되므로(3,000자 문서 재현율 0.937 → 0.284) 창 분할을 직접 한다.
+    """
+    body = max_len - 2                            # [CLS] ... [SEP]
+    step = max(body - stride, 1)
+    wins = []
+    for s in range(0, max(len(ids), 1), step):
+        cid, cof = ids[s:s + body], offs[s:s + body]
+        if not cid:
+            break
+        wins.append(([cls_id] + cid + [sep_id], [(0, 0)] + cof + [(0, 0)]))
+        if s + body >= len(ids):
+            break
+    return wins
+
+
 class _FastTokenizer:
-    """tokenizers 기반. transformers 의 return_overflowing_tokens 와 같은 출력을 만든다."""
+    """tokenizers 기반. (ids, attention_mask, offsets) 를 창 단위로 돌려준다."""
 
     def __init__(self, tokenizer_dir, max_len, stride):
         from tokenizers import Tokenizer
-        self.tk = Tokenizer.from_file(str(Path(tokenizer_dir) / "tokenizer.json"))
-        self.tk.enable_truncation(max_length=max_len, stride=stride)
-        self.tk.no_padding()                      # attention_mask 로 거르므로 패딩 불필요
+        d = Path(tokenizer_dir)
+        self.tk = Tokenizer.from_file(str(d / "tokenizer.json"))
+        self.tk.no_truncation(); self.tk.no_padding()
+        self.max_len, self.stride = max_len, stride
+        self.cls = self.tk.token_to_id("[CLS]"); self.sep = self.tk.token_to_id("[SEP]")
 
     def __call__(self, text):
-        enc = self.tk.encode(text)
-        wins = [enc] + list(enc.overflowing)
-        return ([w.ids for w in wins], [w.attention_mask for w in wins],
-                [[tuple(o) for o in w.offsets] for w in wins])
+        enc = self.tk.encode(text, add_special_tokens=False)
+        wins = chunk_windows(list(enc.ids), [tuple(o) for o in enc.offsets],
+                             self.max_len, self.stride, self.cls, self.sep)
+        return ([w[0] for w in wins], [[1] * len(w[0]) for w in wins], [w[1] for w in wins])
 
 
 class _SlowTokenizer:
@@ -46,12 +88,13 @@ class _SlowTokenizer:
         from transformers import AutoTokenizer
         self.tok = AutoTokenizer.from_pretrained(tokenizer_dir)
         self.max_len, self.stride = max_len, stride
+        self.cls = self.tok.cls_token_id; self.sep = self.tok.sep_token_id
 
     def __call__(self, text):
-        enc = self.tok(text, return_offsets_mapping=True, truncation=True, max_length=self.max_len,
-                       stride=self.stride, return_overflowing_tokens=True, padding=True)
-        return (enc["input_ids"], enc["attention_mask"],
-                [[tuple(o) for o in w] for w in enc["offset_mapping"]])
+        enc = self.tok(text, return_offsets_mapping=True, truncation=False, add_special_tokens=False)
+        wins = chunk_windows(enc["input_ids"], [tuple(o) for o in enc["offset_mapping"]],
+                             self.max_len, self.stride, self.cls, self.sep)
+        return ([w[0] for w in wins], [[1] * len(w[0]) for w in wins], [w[1] for w in wins])
 
 
 class Veil:
@@ -62,7 +105,7 @@ class Veil:
         det.mask("...")                       # [PERSON] 치환
     """
 
-    def __init__(self, onnx_path, tokenizer_dir=None, max_len=512, stride=128, threads=4,
+    def __init__(self, onnx_path, tokenizer_dir=None, max_len=512, stride=128, threads=4, normalize=True,
                  o_bias=0.0, merge_adjacent=("ADDRESS",)):
         import onnxruntime as ort
         self.merge_adjacent = set(merge_adjacent or ())   # 인접한 같은 라벨 스팬(공백 1개 이내) 병합 — 벤치 재현 시 ()
@@ -78,6 +121,7 @@ class Veil:
         self.sess = ort.InferenceSession(str(onnx_path), so, providers=["CPUExecutionProvider"])
         self.in_names = [i.name for i in self.sess.get_inputs()]
         self.max_len, self.stride, self.o_bias = max_len, stride, o_bias
+        self.normalize = normalize          # 전각 → 반각(길이 보존). 끄려면 normalize=False
         self.T, self.s0, self.e0 = self._transition()
 
     # ---- 제약 BIOES Viterbi ----
@@ -158,6 +202,7 @@ class Veil:
     def predict(self, text, bs=16):
         """문자 오프셋 스팬 목록 — [{"start","end","label","score"}], 서로 겹치지 않는다."""
         if not text: return []
+        if self.normalize: text = normalize_keep_offsets(text)
         ids, masks, offsets = self.tok(text)
         n = len(ids); spans = []
         for b in range(0, n, bs):
@@ -201,3 +246,33 @@ class Veil:
             out.append(text[pos:sp["start"]]); out.append(fmt.format(label=sp["label"])); pos = sp["end"]
         out.append(text[pos:])
         return "".join(out)
+
+
+def _selfcheck():
+    """창 분할이 긴 입력을 하나도 빠뜨리지 않는지 확인한다.
+
+    회귀 배경(2026-09-23): 토크나이저의 return_overflowing_tokens 에 맡겼더니 1,617 토큰 입력에서
+    창이 2개만 나왔고 953자 이후가 통째로 누락됐다(3,000자 문서 재현율 0.937 → 0.284).
+
+        python -m veil_pii.core
+    """
+    for n in (1, 10, 511, 512, 513, 1617, 5000):
+        ids = list(range(n))
+        offs = [(i, i + 1) for i in range(n)]
+        wins = chunk_windows(ids, offs, 512, 128, cls_id=2, sep_id=3)
+        assert all(len(w[0]) <= 512 for w in wins), n
+        seen = set()
+        for w in wins:
+            seen |= {o[0] for o in w[1][1:-1]}
+        assert seen == set(range(n)), f"n={n} 누락 {sorted(set(range(n)) - seen)[:5]}"
+        for a, b in zip(wins, wins[1:]):          # 경계에 걸친 스팬을 한쪽 창이 온전히 보려면 겹침이 정확해야 한다
+            ov = {o[0] for o in a[1][1:-1]} & {o[0] for o in b[1][1:-1]}
+            assert len(ov) == 128, f"n={n} 겹침 {len(ov)}"
+    t = "０１０-1234-5678"
+    assert len(normalize_keep_offsets(t)) == len(t), "정규화가 길이를 바꾸면 오프셋이 어긋난다"
+    assert normalize_keep_offsets(t).startswith("010")
+    print("ok  창 분할이 전체를 덮는다 · 정규화가 길이를 보존한다")
+
+
+if __name__ == "__main__":
+    _selfcheck()

@@ -4,6 +4,7 @@
     det = Veil("release/model.int8.onnx", tokenizer_dir="release")
     det.predict("담당자 김철수(010-1234-5678)에게 문의")
 """
+import unicodedata
 import json, re
 from pathlib import Path
 import numpy as np
@@ -21,8 +22,47 @@ def _vocative_ok(v, p):
     return has_final if p == "아" else not has_final
 
 
+def normalize_keep_offsets(text):
+    """전각·호환 문자를 반각으로 되돌리되 길이를 바꾸지 않는다.
+
+    NFKC 를 통째로 걸면 '㈜'→'(주)' 처럼 길이가 늘어 문자 오프셋이 어긋난다.
+    그래서 한 글자가 한 글자로만 바뀌는 경우에만 치환한다. 전각 숫자('０１０')로
+    적힌 전화번호·카드번호를 놓치던 문제를 없앤다.
+    """
+    if text.isascii():
+        return text
+    out = []
+    for ch in text:
+        if ord(ch) < 128:
+            out.append(ch); continue
+        n = unicodedata.normalize("NFKC", ch)
+        out.append(n if len(n) == 1 else ch)
+    return "".join(out)
+
+
+def chunk_windows(ids, offs, max_len, stride, cls_id, sep_id):
+    """본문 토큰을 max_len 짜리 창으로 자른다. 인접 창은 stride 토큰만큼 겹친다.
+
+    토크나이저의 `return_overflowing_tokens` 를 쓰지 않는 이유(2026-09-23 실측):
+    1,617 토큰 입력에 max_length=512·stride=128 을 주면 창이 2개만 나오고 953자 이후가
+    통째로 사라진다. transformers·tokenizers 양쪽 다 같다. 긴 문서에서 PII 가 조용히
+    누락되므로(3,000자 문서 재현율 0.937 → 0.284) 창 분할을 직접 한다.
+    """
+    body = max_len - 2                            # [CLS] ... [SEP]
+    step = max(body - stride, 1)
+    wins = []
+    for s in range(0, max(len(ids), 1), step):
+        cid, cof = ids[s:s + body], offs[s:s + body]
+        if not cid:
+            break
+        wins.append(([cls_id] + cid + [sep_id], [(0, 0)] + cof + [(0, 0)]))
+        if s + body >= len(ids):
+            break
+    return wins
+
+
 class Veil:
-    def __init__(self, onnx_path, tokenizer_dir=None, max_len=512, stride=128, threads=4, o_bias=0.0, merge_adjacent=("ADDRESS",)):
+    def __init__(self, onnx_path, tokenizer_dir=None, max_len=512, stride=128, threads=4, o_bias=0.0, merge_adjacent=("ADDRESS",), normalize=True):
         self.merge_adjacent = set(merge_adjacent or ())   # 프로덕션 편의: 인접한 같은 라벨 스팬(공백 1개 이내) 병합 — 벤치마크 비교 시 () 로
         import onnxruntime as ort
         from transformers import AutoTokenizer
@@ -37,6 +77,7 @@ class Veil:
         self.sess = ort.InferenceSession(str(onnx_path), so, providers=["CPUExecutionProvider"])
         self.in_names = [i.name for i in self.sess.get_inputs()]
         self.max_len, self.stride, self.o_bias = max_len, stride, o_bias
+        self.normalize = normalize        # 전각 → 반각(길이 보존). 끄려면 normalize=False
         self.T, self.s0, self.e0 = self._transition()
 
     # ---- 제약 BIOES Viterbi ----
@@ -110,8 +151,19 @@ class Veil:
             if e > s: res.append({"start": s, "end": e, "label": sp["label"], "score": round(sp["score"], 4)})
         return res
 
+    def _encode(self, text):
+        e = self.tok(text, return_offsets_mapping=True, truncation=False, add_special_tokens=False)
+        wins = chunk_windows(e["input_ids"], [tuple(o) for o in e["offset_mapping"]],
+                             self.max_len, self.stride, self.tok.cls_token_id, self.tok.sep_token_id)
+        width = max(len(w[0]) for w in wins)
+        return {"input_ids": [w[0] + [0] * (width - len(w[0])) for w in wins],
+                "attention_mask": [[1] * len(w[0]) + [0] * (width - len(w[0])) for w in wins],
+                "token_type_ids": [[0] * width for _ in wins],
+                "offset_mapping": [w[1] + [(0, 0)] * (width - len(w[1])) for w in wins]}
+
     def predict(self, text, bs=16):
-        enc = self.tok(text, return_offsets_mapping=True, truncation=True, max_length=self.max_len, stride=self.stride, return_overflowing_tokens=True, padding=True)
+        if self.normalize: text = normalize_keep_offsets(text)
+        enc = self._encode(text)
         n = len(enc["input_ids"]); spans = []
         for b in range(0, n, bs):
             feeds = {k: np.asarray(enc[k][b:b + bs], np.int64) for k in self.in_names if k in enc}

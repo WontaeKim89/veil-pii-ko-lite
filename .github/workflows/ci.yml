@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 의존성 (모델 가중치 없이 도는 것만)
+        run: pip install numpy onnxruntime tokenizers pyyaml
+
+      # 가중치(143MB)는 Releases 에 있어 여기서 받지 않는다.
+      # 모델 없이 검증 가능한 것만 돌린다 — 창 분할이 긴 입력을 전부 덮는지, 임포트가 깨지지 않는지.
+      - name: 창 분할 회귀 (512 토큰 초과 구간 누락 방지)
+        run: python -c "from veil_pii.core import _selfcheck; _selfcheck()"
+
+      - name: 임포트 확인
+        run: |
+          python -c "import veil_pii.core as c; print(c.chunk_windows.__doc__.splitlines()[0])"
+          python -c "from veil_pii.core import normalize_keep_offsets as n; assert len(n('０１０-1234')) == len('０１０-1234')"
+
+      - name: 라벨 정의 일관성
+        run: |
+          python - <<'EOF'
+          import json, yaml, pathlib
+          labels = yaml.safe_load(pathlib.Path("release/labels.yaml").read_text())
+          cfg = json.loads(pathlib.Path("release/config.json").read_text())
+          ents = labels["labels"]
+          n = len(cfg["id2label"])
+          assert n == len(ents) * 4 + 1, f"config id2label {n} 개, labels.yaml {len(ents)} 종 — BIOES 4배+O 와 안 맞는다"
+          print(f"{len(ents)} 라벨 · {n} 태그 OK")
+          EOF
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"

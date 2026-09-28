@@ -19,3 +19,9 @@ docs/
 *.png
 dist/
 *.whl
+
+# make_stress.py 로 언제든 다시 만드는 생성물
+data/stress/
+
+# 학습 VM(vm-open-gpu-poc-03) 원본 백업 — 합성 원본·템플릿·최종 학습셋
+data/_backup_vm03/

@@ -40,11 +40,21 @@ class Predictor:
             return self.model(**f).logits.float().cpu().numpy()
 
     def predict(self, text, bs=32):
-        enc = self.tok(text, return_offsets_mapping=True, truncation=True, max_length=self.max_len, stride=self.stride,
-                       return_overflowing_tokens=True, padding=True)
+        # 토크나이저의 return_overflowing_tokens 는 긴 입력에서 두 번째 창 이후를 만들지 않는다.
+        # 서빙(serve/veil.py)과 같은 창 분할을 쓴다.
+        from veil_pii.core import chunk_windows, normalize_keep_offsets
+        text = normalize_keep_offsets(text)
+        e = self.tok(text, return_offsets_mapping=True, truncation=False, add_special_tokens=False)
+        wins = chunk_windows(e["input_ids"], [tuple(o) for o in e["offset_mapping"]],
+                             self.max_len, self.stride, self.tok.cls_token_id, self.tok.sep_token_id)
+        width = max(len(w[0]) for w in wins)
+        enc = {"input_ids": [w[0] + [0] * (width - len(w[0])) for w in wins],
+               "attention_mask": [[1] * len(w[0]) + [0] * (width - len(w[0])) for w in wins],
+               "token_type_ids": [[0] * width for _ in wins],
+               "offset_mapping": [w[1] + [(0, 0)] * (width - len(w[1])) for w in wins]}
         n = len(enc["input_ids"]); spans = []
         for b in range(0, n, bs):
-            feeds = {k: enc[k][b:b + bs] for k in enc if k in ("input_ids", "attention_mask", "token_type_ids")}
+            feeds = {k: enc[k][b:b + bs] for k in ("input_ids", "attention_mask", "token_type_ids")}
             logits = self._logits(feeds)
             for w in range(logits.shape[0]):
                 wi = b + w; offs = enc["offset_mapping"][wi]; am = np.array(enc["attention_mask"][wi], bool)
