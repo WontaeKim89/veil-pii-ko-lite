@@ -1,0 +1,18 @@
+Veil-PII-Ko-Lite
+Copyright 2026 Wontae Kim
+
+This product includes software developed as part of the Veil-PII-Ko-Lite project,
+licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Third-party components
+----------------------
+- Backbone: monologg/koelectra-base-v3-discriminator — Apache License 2.0
+- Training data: BCCard/privacy-filter-openpii-masking — CC-BY-4.0
+- Training data: KDPII (Fei, Kang et al., IEEE Access, 2024) — CC-BY-4.0
+- Synthetic data generated for this project — Apache License 2.0
+
+Baselines referenced in the evaluation are not redistributed here
+----------------------------------------------------------------
+- BCCard/MoAI-Privacy-Filter-INT8
+- FrameByFrame/privacy-filter-korean — Apache License 2.0
+- Azure AI Language PII detection (API version 2024-11-01)

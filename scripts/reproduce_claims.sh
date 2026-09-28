@@ -22,9 +22,24 @@ python3 eval/span_f1.py --model $R --onnx $R/model.int8.onnx --data data/unified
 [ -f data/unified/synth_heldout_v3.jsonl ] && python3 eval/span_f1.py --model $R --onnx $R/model.int8.onnx --data data/unified/synth_heldout_v3.jsonl --tag synth_heldout --threads 8 --out $R/repro_synth_int8.json
 echo "== ② Veil-PII-Ko-Lite fp32 (INT8 무손실 확인)"
 python3 eval/span_f1.py --model $R/fp32 --data data/unified/kdpii_test.jsonl --tag kdpii_test --out $R/repro_kdpii_fp32.json
-echo "== ③ BCCard/MoAI-Privacy-Filter-INT8 (동일 스코어러·디코더)"
+echo "== \u2462 BCCard/MoAI-Privacy-Filter-INT8 (동일 스코어러·디코더)"
 python3 eval/eval_bccard.py --data data/unified/kdpii_test.jsonl --tag kdpii_test --threads 8 --out $R/repro_bccard_baseline_kdpii.json
 python3 eval/eval_bccard.py --data data/unified/bccard_val.jsonl --lang ko --tag bccard_val_ko --threads 8 --out $R/repro_bccard_baseline_val.json
+echo "== \u2463 FrameByFrame/privacy-filter-korean (동일 스코어러·디코더)"
+python3 eval/eval_framebyframe.py --data data/unified/kdpii_test.jsonl --tag kdpii_test --threads 8 --out $R/repro_framebyframe_kdpii.json
+echo "== \u2464 학습셋 누수 점검 (train 과 test 의 텍스트 중복)"
+python3 eval/leakage_check.py --train data/unified/kdpii_train.jsonl --test data/unified/kdpii_test.jsonl --name KDPII
+python3 eval/leakage_check.py --train data/unified/bccard_train.jsonl --test data/unified/bccard_val.jsonl --name BCCard
+echo "== \u2465 표기 변형 · 장문 스트레스"
+python3 eval/make_stress.py --data data/unified/kdpii_test.jsonl --out-dir data/stress
+for f in data/stress/*.jsonl; do b=$(basename "$f" .jsonl)
+  python3 eval/span_f1.py --model $R --onnx $R/model.int8.onnx --data "$f" --tag "$b" --threads 8 --out "$R/stress/eval_$b.json"
+done
+echo "== Azure AI Language PII 는 구독 키가 필요해 이 스크립트에서 제외한다."
+echo "   재현하려면 AZURE_LANG_ENDPOINT / AZURE_LANG_KEY 를 설정하고 eval/eval_azure_pii.py 를 직접 실행한다."
+mkdir -p $R/stress
+echo "== 라벨별 비교표"
+python3 eval/compare_per_entity.py --out $R/PER_LABEL.md
 echo "== 표"
 python3 - <<'EOF'
 import json, glob

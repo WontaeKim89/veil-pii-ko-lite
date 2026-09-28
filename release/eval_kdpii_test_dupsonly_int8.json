@@ -1,0 +1,14 @@
+{
+ "micro": {
+  "p": 0.0,
+  "r": 0.0,
+  "f1": 0.0,
+  "partial_f1": 0.0,
+  "support": 0
+ },
+ "per_entity": {},
+ "n_rows": 92,
+ "sec": 0.18611407279968262,
+ "ms_per_row": 2.0229790521704634,
+ "tag": "kdpii_test_dupsonly"
+}
